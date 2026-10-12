@@ -21,3 +21,8 @@ export async function blobGetJson(url) {
   if (!r.ok) return null;
   try { return await r.json(); } catch { return null; }
 }
+export async function blobDelete(urls) {
+  if (!urls.length) return;
+  const r = await fetch(`${API}/delete`, { method: "POST", headers: { authorization: `Bearer ${token()}`, "x-api-version": "7", "content-type": "application/json" }, body: JSON.stringify({ urls }) });
+  if (!r.ok) throw new Error(`blob delete ${r.status}: ${(await r.text()).slice(0, 200)}`);
+}

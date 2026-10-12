@@ -40,6 +40,7 @@ ul{margin:0;padding-left:18px;line-height:1.7}
 .chip{display:inline-block;background:var(--bg);border:2px solid var(--edge);border-radius:999px;padding:4px 10px;margin:3px 4px 3px 0;font-weight:700;font-size:.9rem}
 .chip small{color:var(--muted);font-weight:700}
 .muted{color:var(--muted)}
+a.reset{color:var(--muted);font-weight:700}
 .err{color:var(--bad);font-weight:700}
 .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 </style>
@@ -92,13 +93,20 @@ function render(data){
       <div><h3>Practise these at home</h3>${k.trouble.length?`<ul>${k.trouble.map(t=>`<li>${t.item} <span class="muted">(${t.wrong} wrong, ${t.right} right)</span></li>`).join("")}</ul>`:'<span class="muted">Nothing is repeatedly wrong. Good sign.</span>'}</div>
       <div><h3>Words said</h3>${k.said.length?k.said.map(s=>`<span class="chip">${s.word} <small>×${s.times}</small></span>`).join(""):'<span class="muted">Mark "He said it" in Say it to see them here.</span>'}</div>
     </div>
-    <div class="muted">Last activity: ${k.last?new Date(k.last).toLocaleString():"none"}</div>`;
+    <div class="muted">Last activity: ${k.last?new Date(k.last).toLocaleString():"none"} · <a href="#" class="reset" data-kid="${k.kid}">Reset ${name}\u2019s history</a></div>`;
     root.appendChild(el);
   }
 }
 $("go").onclick=()=>{pin=$("pin").value.trim();$("err").hidden=true;load()};
 $("pin").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click()});
 $("range").onchange=load;
+document.addEventListener("click",async e=>{
+  const a=e.target.closest("a.reset");if(!a)return;e.preventDefault();
+  const kid=a.dataset.kid;
+  if(a.dataset.armed!=="1"){a.dataset.armed="1";a.textContent="Tap again to delete all of "+(NAMES[kid]||kid)+"'s history";setTimeout(()=>{a.dataset.armed="";a.textContent="Reset "+(NAMES[kid]||kid)+"\u2019s history"},5000);return}
+  const r=await fetch("/api/reset",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({pin,kid})});
+  a.textContent=r.ok?"Deleted.":"Failed.";setTimeout(load,800);
+});
 if(pin)load();
 </script>
 </body>
