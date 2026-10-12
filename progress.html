@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Talk Tap Progress</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700;800&display=swap">
+<style>
+/* Parent view: scan, not play. Summary tiles first, then per-day bars, then the two lists that matter: words said, items to practise. */
+:root{--bg:#eaf4ff;--panel:#fff;--ink:#1d2b3a;--muted:#5b6b7c;--accent:#ff8a1f;--edge:#cfe0f2;--good:#2bb673;--bad:#e35d5d;--bar:#9cc5ee;
+  --display:"Fredoka","Nunito",system-ui,sans-serif;--body:"Nunito",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101a26;--panel:#1a2736;--ink:#f1f5f9;--muted:#9fb0c2;--edge:#34475c;--bar:#2f5c8a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101a26;--panel:#1a2736;--ink:#f1f5f9;--muted:#9fb0c2;--edge:#34475c;--bar:#2f5c8a;color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font-family:var(--display);font-size:1.8rem;margin:0}
+h2{font-family:var(--display);font-size:1.35rem;margin:0}
+h3{font-family:var(--display);font-size:1.05rem;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.gate{background:var(--panel);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:10px;max-width:380px}
+input,select,button{font-family:inherit;font-size:1rem}
+input{padding:12px;border-radius:12px;border:2px solid var(--edge);background:var(--bg);color:var(--ink);letter-spacing:.3em;text-align:center}
+select{padding:8px 10px;border-radius:10px;border:2px solid var(--edge);background:var(--panel);color:var(--ink)}
+button{padding:12px 20px;border-radius:14px;border:0;background:var(--accent);color:#fff;font-family:var(--display);font-weight:600;cursor:pointer}
+.kid{background:var(--panel);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:18px}
+.kid header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.kid header .sub{color:var(--muted);font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.tile{border:2px solid var(--edge);border-radius:14px;padding:12px 14px}
+.tile b{font-family:var(--display);font-size:1.6rem;display:block;font-variant-numeric:tabular-nums}
+.tile span{color:var(--muted);font-size:.85rem;font-weight:700}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bar{display:grid;grid-template-columns:86px 1fr 60px;align-items:center;gap:10px;font-variant-numeric:tabular-nums;font-size:.95rem}
+.bar .track{height:14px;background:var(--edge);border-radius:7px;overflow:hidden}
+.bar .fill{height:100%;background:var(--bar);border-radius:7px}
+.bar .fill.acc{background:var(--good)}
+.bar .n{color:var(--muted);text-align:right;font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+ul{margin:0;padding-left:18px;line-height:1.7}
+.chip{display:inline-block;background:var(--bg);border:2px solid var(--edge);border-radius:999px;padding:4px 10px;margin:3px 4px 3px 0;font-weight:700;font-size:.9rem}
+.chip small{color:var(--muted);font-weight:700}
+.muted{color:var(--muted)}
+.err{color:var(--bad);font-weight:700}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Talk Tap progress</h1><div id="controls" hidden><select id="range"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select></div></div>
+  <div class="gate" id="gate">
+    <div>Enter the parent code.</div>
+    <input id="pin" inputmode="numeric" placeholder="••••" aria-label="Parent code">
+    <button id="go">Show progress</button>
+    <div class="err" id="err" hidden>Wrong code.</div>
+  </div>
+  <div id="report"></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const NAMES={oba:"Oba",june:"June"};const MODE={find:"Find it",read:"Read it",say:"Say it",ask:"Ask it"};
+const LEVELS=["One word","He is / She is","I can","Verb + thing","Who is doing it","Describe it"];
+const WH=["Answer: what, who, where","Answer: add when and how","Answer: mixed choices","Ask me: pick the question word"];
+let pin="";
+try{pin=sessionStorage.getItem("tt.pin")||""}catch(e){}
+async function load(){
+  const days=$("range").value;
+  const r=await fetch(`/api/progress?pin=${encodeURIComponent(pin)}&days=${days}`,{cache:"no-store"});
+  if(r.status===401){$("err").hidden=false;$("gate").hidden=false;$("controls").hidden=true;return}
+  const data=await r.json();
+  try{sessionStorage.setItem("tt.pin",pin)}catch(e){}
+  $("gate").hidden=true;$("controls").hidden=false;render(data);
+}
+function pct(a,b){return b?Math.round(100*a/b):0}
+function render(data){
+  const root=$("report");root.innerHTML="";
+  if(!data.kids.length){root.innerHTML='<div class="kid"><p class="muted">No practice logged in this period yet. Rounds appear here a few seconds after each session ends (the iPad needs internet at some point).</p></div>';return}
+  for(const k of data.kids){
+    const name=NAMES[k.kid]||k.kid;const el=document.createElement("section");el.className="kid";
+    const tries=k.days.reduce((a,d)=>a+d.tries,0),right=k.days.reduce((a,d)=>a+d.right,0),first=k.days.reduce((a,d)=>a+d.first,0),mins=k.days.reduce((a,d)=>a+d.minutes,0),said=k.days.reduce((a,d)=>a+d.said,0);
+    const daysActive=k.days.length;const maxMin=Math.max(1,...k.days.map(d=>d.minutes));
+    el.innerHTML=`<header><h2>${name}</h2><span class="sub">Level ${k.level||1}: ${LEVELS[(k.level||1)-1]} · WH stage ${k.wh||1}: ${WH[(k.wh||1)-1]}</span></header>
+    <div class="tiles">
+      <div class="tile"><b>${daysActive}</b><span>days practised</span></div>
+      <div class="tile"><b>${mins}</b><span>minutes</span></div>
+      <div class="tile"><b>${pct(first,tries)}%</b><span>right first try (${tries} answers)</span></div>
+      <div class="tile"><b>${said}</b><span>words said (Say it)</span></div>
+      <div class="tile"><b>${k.mastered}</b><span>items mastered</span></div>
+    </div>
+    <div><h3>Minutes per day</h3><div class="bars">${k.days.slice(-14).map(d=>`<div class="bar"><span>${d.day.slice(5)}</span><div class="track"><div class="fill" style="width:${pct(d.minutes,maxMin)}%"></div></div><span class="n">${d.minutes} min</span></div>`).join("")}</div></div>
+    <div><h3>Accuracy by mode (first try)</h3><div class="bars">${k.modes.map(m=>`<div class="bar"><span>${MODE[m.mode]||m.mode}</span><div class="track"><div class="fill acc" style="width:${pct(m.first,m.tries)}%"></div></div><span class="n">${pct(m.first,m.tries)}% · ${m.tries}</span></div>`).join("")||'<span class="muted">No answers yet.</span>'}</div></div>
+    <div class="two">
+      <div><h3>Practise these at home</h3>${k.trouble.length?`<ul>${k.trouble.map(t=>`<li>${t.item} <span class="muted">(${t.wrong} wrong, ${t.right} right)</span></li>`).join("")}</ul>`:'<span class="muted">Nothing is repeatedly wrong. Good sign.</span>'}</div>
+      <div><h3>Words said</h3>${k.said.length?k.said.map(s=>`<span class="chip">${s.word} <small>×${s.times}</small></span>`).join(""):'<span class="muted">Mark "He said it" in Say it to see them here.</span>'}</div>
+    </div>
+    <div class="muted">Last activity: ${k.last?new Date(k.last).toLocaleString():"none"}</div>`;
+    root.appendChild(el);
+  }
+}
+$("go").onclick=()=>{pin=$("pin").value.trim();$("err").hidden=true;load()};
+$("pin").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click()});
+$("range").onchange=load;
+if(pin)load();
+</script>
+</body>
+</html>
