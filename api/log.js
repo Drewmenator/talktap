@@ -1,5 +1,5 @@
 // Appends a batch of answer events to one JSON file per child, per day, per device.
-import { put, list } from "@vercel/blob";
+import { blobList, blobPut, blobGetJson } from "./_blob.js";
 const PREFIX = process.env.BLOB_PREFIX || "tt";
 const ALLOWED = ["kid","mode","level","wh","item","target","choice","correct","first_try","score","voice","client_ts","session_id"];
 export default async function handler(req, res) {
@@ -27,13 +27,13 @@ async function main(req, res) {
     const path = `${PREFIX}/events/${key}/${device}.json`;
     let existing = [];
     try {
-      const { blobs } = await list({ prefix: path, limit: 1 });
-      const hit = blobs.find(b => b.pathname === path);
-      if (hit) { const r = await fetch(hit.url + "?t=" + Date.now(), { cache: "no-store" }); if (r.ok) existing = await r.json(); }
+      const { blobs } = await blobList(path);
+      const hit = (blobs || []).find(b => b.pathname === path);
+      if (hit) existing = await blobGetJson(hit.url);
     } catch {}
     if (!Array.isArray(existing)) existing = [];
     const merged = existing.concat(evs).slice(-5000);
-    await put(path, JSON.stringify(merged), { access: "public", addRandomSuffix: false, allowOverwrite: true, contentType: "application/json", cacheControlMaxAge: 60 });
+    await blobPut(path, JSON.stringify(merged), "application/json");
     written += evs.length;
   }
   return res.status(200).json({ ok: true, written });

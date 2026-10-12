@@ -1,5 +1,5 @@
 // Returns an aggregated progress report for the parent page. Gated by the parent code.
-import { list } from "@vercel/blob";
+import { blobList, blobGetJson } from "./_blob.js";
 const PREFIX = process.env.BLOB_PREFIX || "tt";
 const MODES = ["find","read","say","ask"];
 export default async function handler(req, res) {
@@ -13,12 +13,12 @@ async function main(req, res) {
   const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
   const files = []; let cursor;
   do {
-    const r = await list({ prefix: `${PREFIX}/events/`, cursor, limit: 1000 });
-    for (const b of r.blobs) { const m = b.pathname.match(/events\/([^/]+)\/(\d{4}-\d{2}-\d{2})\/([^/]+)\.json$/); if (m && m[2] >= since) files.push({ kid: m[1], day: m[2], url: b.url }); }
-    cursor = r.hasMore ? r.cursor : undefined;
+    const r = await blobList(`${PREFIX}/events/`, cursor);
+    for (const b of (r.blobs || [])) { const m = b.pathname.match(/events\/([^/]+)\/(\d{4}-\d{2}-\d{2})\/([^/]+)\.json$/); if (m && m[2] >= since) files.push({ kid: m[1], day: m[2], url: b.url }); }
+    cursor = r.hasMore && r.cursor ? r.cursor : undefined;
   } while (cursor);
   const events = [];
-  await Promise.all(files.map(async f => { try { const r = await fetch(f.url + "?t=" + Date.now(), { cache: "no-store" }); const arr = await r.json(); if (Array.isArray(arr)) for (const e of arr) events.push({ ...e, kid: f.kid, day: f.day }); } catch {} }));
+  await Promise.all(files.map(async f => { try { const arr = await blobGetJson(f.url); if (Array.isArray(arr)) for (const e of arr) events.push({ ...e, kid: f.kid, day: f.day }); } catch {} }));
   events.sort((a, b) => a.client_ts < b.client_ts ? -1 : 1);
   const kids = {};
   for (const e of events) {
