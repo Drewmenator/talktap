@@ -3,6 +3,9 @@ import { list } from "@vercel/blob";
 const PREFIX = process.env.BLOB_PREFIX || "tt";
 const MODES = ["find","read","say","ask"];
 export default async function handler(req, res) {
+  try { return await main(req, res); } catch (err) { res.setHeader("Access-Control-Allow-Origin", "*"); return res.status(500).json({ error: String(err && err.message || err) }); }
+}
+async function main(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   const pin = String(req.query.pin || "");
   if (!process.env.PARENT_PIN || pin !== process.env.PARENT_PIN) return res.status(401).json({ error: "wrong code" });

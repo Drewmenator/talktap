@@ -3,6 +3,9 @@ import { put, list } from "@vercel/blob";
 const PREFIX = process.env.BLOB_PREFIX || "tt";
 const ALLOWED = ["kid","mode","level","wh","item","target","choice","correct","first_try","score","voice","client_ts","session_id"];
 export default async function handler(req, res) {
+  try { return await main(req, res); } catch (err) { res.setHeader("Access-Control-Allow-Origin", "*"); return res.status(500).json({ error: String(err && err.message || err) }); }
+}
+async function main(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "content-type");
   if (req.method === "OPTIONS") return res.status(204).end();
@@ -30,7 +33,7 @@ export default async function handler(req, res) {
     } catch {}
     if (!Array.isArray(existing)) existing = [];
     const merged = existing.concat(evs).slice(-5000);
-    await put(path, JSON.stringify(merged), { access: "public", addRandomSuffix: false, allowOverwrite: true, contentType: "application/json", cacheControlMaxAge: 0 });
+    await put(path, JSON.stringify(merged), { access: "public", addRandomSuffix: false, allowOverwrite: true, contentType: "application/json", cacheControlMaxAge: 60 });
     written += evs.length;
   }
   return res.status(200).json({ ok: true, written });
