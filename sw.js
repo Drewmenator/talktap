@@ -1,4 +1,4 @@
-const CACHE="talktap-v9";
+const CACHE="talktap-v10";
 const ASSETS=["./","./index.html","./manifest.json","./voice_jessica.mp3","./voice_dad.mp3","./voice_mum.mp3","./icon-180.png","./icon-192.png","./icon-512.png","./progress.html"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
@@ -13,6 +13,6 @@ self.addEventListener("fetch",e=>{
       return new Response(buf.slice(start,end+1),{status:206,headers:{"Content-Type":hit.headers.get("Content-Type")||"audio/mpeg","Content-Range":`bytes ${start}-${end}/${buf.byteLength}`,"Content-Length":String(end-start+1),"Accept-Ranges":"bytes"}});
     }
     if(hit)return hit;
-    try{const res=await fetch(req);if(res.ok&&new URL(req.url).origin===location.origin){const c=await caches.open(CACHE);c.put(req,res.clone())}return res}catch(err){return hit||Response.error()}
+    try{const res=await fetch(req);const h=new URL(req.url).hostname;if((res.ok||res.type==="opaque")&&(h===location.hostname||h.endsWith("blob.vercel-storage.com"))){const c=await caches.open(CACHE);c.put(req,res.clone())}return res}catch(err){return hit||Response.error()}
   }));
 });

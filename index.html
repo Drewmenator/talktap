@@ -51,6 +51,8 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .tile.good{border-color:var(--good);background:color-mix(in srgb,var(--good) 18%,var(--tile));animation:pop .5s}
 .tile.bad{border-color:var(--bad);animation:shake .4s;opacity:.55}
 .tile.dim{opacity:.35}
+.tile img{width:100%;height:100%;object-fit:contain;border-radius:22px;pointer-events:none}
+.prompt .big img{height:clamp(140px,30vh,340px);width:auto;max-width:48vw;object-fit:contain;border-radius:18px;display:block}
 @keyframes pop{30%{transform:scale(1.08)}}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
@@ -230,6 +232,18 @@ const LEVELS=[
 ];
 LEVELS.forEach(L=>L.items.forEach(i=>{i.lvl=L.n}));
 const ALL=LEVELS.flatMap(L=>L.items);
+// Pictures: generated scene illustrations stored in Blob, keyed by name. Emoji stay as the fallback.
+let IMGS=(()=>{try{return JSON.parse(localStorage.getItem("tt.imgs")||"{}")}catch(e){return {}}})();
+fetch("api/images").then(r=>r.ok?r.json():null).then(m=>{if(m&&Object.keys(m).length){IMGS=m;try{localStorage.setItem("tt.imgs",JSON.stringify(m))}catch(e){}}}).catch(()=>{});
+function imgKey(it){
+  if(!it||!it.lvl)return null;const w=it.w.replace(/ /g,"_");
+  if(it.lvl===2)return "job_"+w+(it.s.startsWith("She")?"_f":"_m");
+  if(it.lvl===3)return "can_"+w;if(it.lvl===4)return "vo_"+w;if(it.lvl===5)return "sv_"+w;if(it.lvl===6)return "d6_"+w;
+  return null;
+}
+function imgUrl(it){const k=imgKey(it);return k&&IMGS[k]||null}
+function fillTile(b,it){const u=imgUrl(it);if(u){b.innerHTML="";const im=document.createElement("img");im.src=u;im.alt=it.w;b.appendChild(im)}else b.textContent=it.e}
+function fillBig(el,it,fallbackText){const u=it&&imgUrl(it);if(u){el.innerHTML="";const im=document.createElement("img");im.src=u;im.alt=it.w;el.appendChild(im)}else el.textContent=fallbackText}
 
 // ---------- WH scenes ----------
 // Each scene has one answer per question word. who = person/animal, what = thing, where = place, when = time of day, how = feeling.
@@ -259,8 +273,9 @@ const SCENES=[
  ["girl","reading","book","school","afternoon","happy"],
  ["mum","driving","car","road","night","angry"],
  ["baby","holding","ball","park","afternoon","scared"],
-].map(([who,verb,what,where,when,how])=>{
+].map(([who,verb,what,where,when,how],idx)=>{
   const s={who:WHO[who],what:WHAT[what]||WHERE[what],where:WHERE[where],when:WHEN[when],how:HOW[how],verb};
+  s.img="wh_"+["boy","girl","dog","mum","dad","baby","teacher","boy2","girl2","cat","grandma","dad2","boy3","girl3","mum2","baby2"][idx];
   s.sentence=cap(s.who.w)+" is "+verb+" "+s.what.w+" "+s.where.w+" "+s.when.w+".";
   s.pic=s.who.e+s.what.e+s.where.e+s.when.e;
   s.q={who:"Who is "+verb+"?",what:"What is "+s.who.w+" "+verb+"?",where:"Where is "+s.who.w+"?",when:"When is "+s.who.w+" "+verb+"?",how:"How does "+s.who.w+" feel?"};
@@ -443,13 +458,13 @@ function askRound(){
     S.choices=shuffle([type,...others]);
     for(const t of S.choices){
       const b=document.createElement("button");b.className="tile";b.style.fontSize="clamp(2rem,6vw,4rem)";b.style.fontFamily="var(--display)";b.textContent=WH_WORD[t];
-      b.onclick=()=>chooseWH(b,t===type,()=>{big.textContent=sc.pic+(type==="how"?sc.how.e:"");return WH_WORD[type]+" "+sc.a[type]});
+      b.onclick=()=>chooseWH(b,t===type,()=>{if(IMGS[sc.img]){big.innerHTML="";const im=document.createElement("img");im.src=IMGS[sc.img];im.alt=sc.sentence;big.appendChild(im)}else big.textContent=sc.pic+(type==="how"?sc.how.e:"");return WH_WORD[type]+" "+sc.a[type]});
       tiles.appendChild(b);
     }
     speak("Something is missing. Ask me.");
     return;
   }
-  big.textContent=sc.pic+(type==="how"?sc.how.e:"");
+  if(IMGS[sc.img]){big.innerHTML="";const im=document.createElement("img");im.src=IMGS[sc.img];im.alt=sc.sentence;big.appendChild(im)}else big.textContent=sc.pic+(type==="how"?sc.how.e:"");
   pt.textContent=sc.q[type];
   hint.textContent="He hears the question and taps the answer. Speaker repeats the question.";
   let pool;
@@ -459,7 +474,7 @@ function askRound(){
   const d=[];for(const p of pool){if(!d.some(x=>x.e===p.e)&&p.e!==answer.e)d.push(p);if(d.length===2)break}
   S.choices=shuffle([answer,...d]);
   for(const c of S.choices){
-    const b=document.createElement("button");b.className="tile";b.textContent=c.e;b.setAttribute("aria-label",c.w);
+    const b=document.createElement("button");b.className="tile";fillTile(b,c);b.setAttribute("aria-label",c.w);
     b.onclick=()=>chooseWH(b,c===answer,()=>sc.a[type]);tiles.appendChild(b);
   }
   speak(sc.q[type]);
@@ -505,7 +520,7 @@ function newRound(){
   tiles.innerHTML="";actions.innerHTML="";big.hidden=true;pt.className="text";
   if(S.mode==="say"){
     tiles.hidden=true;
-    big.hidden=false;big.textContent=S.item.e;
+    big.hidden=false;fillBig(big,S.item,S.item.e);
     pt.textContent=S.item.q;
     hint.textContent="Tap the speaker to hear the question. Model the answer, then give him time.";
     actions.append(
@@ -520,7 +535,7 @@ function newRound(){
   tiles.hidden=false;
   S.choices=shuffle([S.item,...distractors(S.item)]);
   for(const c of S.choices){
-    const b=document.createElement("button");b.className="tile";b.textContent=c.e;b.setAttribute("aria-label",c.w);
+    const b=document.createElement("button");b.className="tile";fillTile(b,c);b.setAttribute("aria-label",c.w);
     b.onclick=()=>choose(b,c);tiles.appendChild(b);
   }
   if(S.mode==="find"){
