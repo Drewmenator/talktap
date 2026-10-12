@@ -51,7 +51,8 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .tile.good{border-color:var(--good);background:color-mix(in srgb,var(--good) 18%,var(--tile));animation:pop .5s}
 .tile.bad{border-color:var(--bad);animation:shake .4s;opacity:.55}
 .tile.dim{opacity:.35}
-.tile img{width:100%;height:100%;object-fit:contain;border-radius:22px;pointer-events:none}
+.tile{min-height:0;min-width:0;overflow:hidden;position:relative}
+.tile img{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);object-fit:contain;border-radius:22px;pointer-events:none}
 .prompt .big img{height:clamp(140px,30vh,340px);width:auto;max-width:48vw;object-fit:contain;border-radius:18px;display:block}
 @keyframes pop{30%{transform:scale(1.08)}}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
