@@ -414,8 +414,28 @@ const $=id=>document.getElementById(id);
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const levelItems=n=>LEVELS[n-1].items;
 let last=null;
+// Spaced review: an item is mastered after 3 first-try rights in a row, then comes back after 1, 3, 7 and 14 days. A miss sends it back to the start.
+const SR_DAYS=[1,3,7,14];
+function srKey(it){return (S.mode==="find"?"find|":"read|")+it.w+"|"+(it.lvl||1)}
+function srRec(){const k=KIDS[S.kid];k.sr=k.sr||{};return k.sr}
+function srDue(){
+  const sr=srRec(),now=Date.now(),pool=S.mode==="find"?levelItems(1):ALL.filter(i=>(i.lvl||1)<=S.settings.level);
+  return pool.filter(i=>{const r=sr[srKey(i)];return r&&r.due&&r.due<=now&&i!==last});
+}
+function srUpdate(it,firstTryRight,wrong){
+  const sr=srRec(),k=srKey(it),r=sr[k]||(sr[k]={n:0,step:0,due:null});
+  if(wrong){r.n=0;r.step=0;r.due=null}
+  else if(firstTryRight){
+    r.n++;
+    if(S.review){r.step=Math.min(r.step+1,SR_DAYS.length-1);r.due=Date.now()+SR_DAYS[r.step]*864e5}
+    else if(r.n>=3&&!r.due){r.step=0;r.due=Date.now()+SR_DAYS[0]*864e5}
+  }
+  save("tt.kids",KIDS);
+}
 function pick(){
   // Find it always uses one-word items (no reading). Read it and Say it use the set level.
+  S.review=false;
+  if(S.mode!=="say"&&Math.random()<0.34){const due=srDue();if(due.length){S.review=true;return due[Math.random()*due.length|0]}}
   const src=S.mode==="find"?levelItems(1):levelItems(S.settings.level);
   const p=src.filter(i=>i!==last);
   return p[Math.random()*p.length|0]||src[0];
@@ -561,7 +581,8 @@ function choose(btn,c){
   if(S.locked)return;
   const stat=S.today[S.mode];stat[1]++;
   const firstTry=!S.triedThisRound;S.triedThisRound=true;
-  logEvent({mode:S.mode,level:S.mode==="read"?S.settings.level:1,item:S.mode==="find"?"Find the "+S.item.w:S.item.s,target:S.item.w,choice:c.w,correct:c===S.item,first_try:firstTry&&c===S.item,replays:S.replays||0,ms:firstTry?Date.now()-S.roundT0:undefined});
+  logEvent({mode:S.mode,level:S.mode==="read"?S.settings.level:1,item:S.mode==="find"?"Find the "+S.item.w:S.item.s,target:S.item.w,choice:c.w,correct:c===S.item,first_try:firstTry&&c===S.item,replays:S.replays||0,ms:firstTry?Date.now()-S.roundT0:undefined,review:S.review||undefined});
+  if(firstTry)srUpdate(S.item,c===S.item,c!==S.item);
   if(c===S.item){
     S.locked=true;stat[0]++;btn.classList.add("good");
     [...$("tiles").children].forEach(x=>{if(x!==btn)x.classList.add("dim")});

@@ -22,13 +22,14 @@ async function main(req, res) {
   events.sort((a, b) => a.client_ts < b.client_ts ? -1 : 1);
   const kids = {};
   for (const e of events) {
-    const k = kids[e.kid] ||= { kid: e.kid, days: {}, modes: {}, said: {}, trouble: {}, sessions: {}, level: null, wh: null, last: null, total: 0, indep: 0, indepN: 0, ms: [] };
+    const k = kids[e.kid] ||= { kid: e.kid, days: {}, modes: {}, said: {}, trouble: {}, sessions: {}, level: null, wh: null, last: null, total: 0, indep: 0, indepN: 0, ms: [], rev: 0, revN: 0 };
     k.total++; k.last = e.client_ts;
     if (e.level) k.level = e.level; if (e.wh) k.wh = e.wh;
     const d = k.days[e.day] ||= { day: e.day, tries: 0, right: 0, first: 0, said: 0, sessions: new Set() };
     d.tries++; if (e.correct || e.score > 0) d.right++; if (e.first_try) d.first++; if (e.mode === "say" && e.score === 2) d.said++; if (e.session_id) d.sessions.add(e.session_id);
     const m = k.modes[e.mode] ||= { mode: e.mode, tries: 0, right: 0, first: 0 };
     m.tries++; if (e.correct || e.score > 0) m.right++; if (e.first_try) m.first++;
+    if (e.review && e.mode !== "say") { k.revN++; if (e.first_try) k.rev++; }
     if (e.mode !== "say" && typeof e.replays === "number" && typeof e.ms === "number") { k.indepN++; if (e.first_try && e.replays === 0) k.indep++; if (e.ms > 0 && e.ms < 60000) k.ms.push(e.ms); }
     if (e.mode === "say" && e.score === 2 && e.target) k.said[e.target] = (k.said[e.target] || 0) + 1;
     if (e.mode !== "say" && e.correct === false && e.item) { const t = k.trouble[e.item] ||= { item: e.item, wrong: 0, right: 0 }; t.wrong++; }
@@ -41,7 +42,7 @@ async function main(req, res) {
     for (const s of Object.values(k.sessions)) { const mins = Math.min((Date.parse(s.last) - Date.parse(s.first)) / 60000 + 0.5, 60); minutesByDay[s.day] = (minutesByDay[s.day] || 0) + mins; }
     return {
       kid: k.kid, total: k.total, level: k.level, wh: k.wh, last: k.last,
-      indep: k.indep, indepN: k.indepN, medianMs: k.ms.length ? k.ms.sort((a, b) => a - b)[Math.floor(k.ms.length / 2)] : null,
+      indep: k.indep, indepN: k.indepN, rev: k.rev, revN: k.revN, medianMs: k.ms.length ? k.ms.sort((a, b) => a - b)[Math.floor(k.ms.length / 2)] : null,
       days: Object.values(k.days).sort((a, b) => a.day < b.day ? -1 : 1).map(d => ({ day: d.day, tries: d.tries, right: d.right, first: d.first, said: d.said, minutes: Math.round(minutesByDay[d.day] || 0) })),
       modes: MODES.filter(m => k.modes[m]).map(m => k.modes[m]),
       said: Object.entries(k.said).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([w, n]) => ({ word: w, times: n })),
