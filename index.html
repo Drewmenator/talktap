@@ -358,22 +358,26 @@ function clipFor(part){
   let t=part.trim();if(!t)return null;if(!/[.!?]$/.test(t))t+=".";
   return CLIPS[t.toLowerCase()]||null;
 }
-const sprites={};let stopTimer=null;
+const sprites={};let stopTimer=null;let playToken=0;
 function spriteAudio(v){
   let a=sprites[v];if(!a){a=new Audio("voice_"+v+".mp3");a.preload="auto";sprites[v]=a}
   return a;
 }
 function playClip(id,cb){
   const v=S.roundVoice||"jessica";const span=(SPRITES[v]||{})[id];if(!span){cb&&cb();return}
-  const a=spriteAudio(v);current=a;
+  const a=spriteAudio(v);current=a;const token=++playToken;
+  const done=()=>{if(!cb)return;const f=cb;cb=null;if(token!==playToken){return}a.pause();a.ontimeupdate=null;a.onplaying=null;clearTimeout(stopTimer);f()};
   const go=()=>{
+    clearTimeout(stopTimer);a.ontimeupdate=null;a.onplaying=null;
     try{a.currentTime=span[0]}catch(e){}
     a.playbackRate=S.settings.rate<0.85?0.9:1;
-    const dur=(span[1]-span[0])/a.playbackRate;
-    clearTimeout(stopTimer);
-    a.ontimeupdate=()=>{if(a.currentTime>=span[1]-0.02){a.pause();a.ontimeupdate=null;clearTimeout(stopTimer);cb&&cb();cb=null}};
-    stopTimer=setTimeout(()=>{if(cb){a.pause();a.ontimeupdate=null;cb();cb=null}},dur*1000+250);
-    const p=a.play();if(p&&p.catch)p.catch(()=>{if(cb){cb();cb=null}});
+    const end=span[1]+0.08;                       // small tail so the last consonant is never clipped (the gap after each line is silence)
+    const dur=(end-span[0])/a.playbackRate;
+    // Stop on the audio's own position, checked often; the wall-clock timer is only a safety net and starts once sound is actually playing.
+    const tick=()=>{if(!cb||token!==playToken){cb=null;return}if(a.currentTime>=end){done();return}requestAnimationFrame(tick)};
+    a.onplaying=()=>{a.onplaying=null;clearTimeout(stopTimer);stopTimer=setTimeout(done,dur*1000+600);requestAnimationFrame(tick)};
+    stopTimer=setTimeout(done,dur*1000+4000);      // if play never starts
+    const p=a.play();if(p&&p.catch)p.catch(()=>done());
   };
   if(a.readyState>=1)go();else{a.addEventListener("loadedmetadata",go,{once:true});a.load()}
 }
@@ -383,7 +387,7 @@ function tts(text,cb){
   if(voice)u.voice=voice;u.rate=S.settings.rate;u.pitch=1.05;
   u.onend=()=>cb&&cb();u.onerror=()=>cb&&cb();speechSynthesis.speak(u);
 }
-function stopAll(){if("speechSynthesis" in window)speechSynthesis.cancel();clearTimeout(stopTimer);if(current){current.pause();current.ontimeupdate=null;current=null}}
+function stopAll(){playToken++;if("speechSynthesis" in window)speechSynthesis.cancel();clearTimeout(stopTimer);if(current){current.pause();current.ontimeupdate=null;current.onplaying=null;current=null}}
 // Splits text into sentences and plays each from a clip when one exists, otherwise speaks it.
 function speak(text,cb){
   stopAll();
