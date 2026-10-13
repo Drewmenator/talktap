@@ -55,6 +55,11 @@ a.reset{color:var(--muted);font-weight:700}
     <div class="err" id="err" hidden>Wrong code.</div>
   </div>
   <div id="report"></div>
+  <section class="kid" id="packs" hidden>
+    <h2>Picture packs</h2>
+    <p class="muted">Pictures live in your own storage. Install a pack once and both iPads pick it up.</p>
+    <div id="packList"></div>
+  </section>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -69,7 +74,7 @@ async function load(){
   if(r.status===401){$("err").hidden=false;$("gate").hidden=false;$("controls").hidden=true;return}
   const data=await r.json();
   try{sessionStorage.setItem("tt.pin",pin)}catch(e){}
-  $("gate").hidden=true;$("controls").hidden=false;render(data);
+  $("gate").hidden=true;$("controls").hidden=false;render(data);loadPacks();
 }
 function pct(a,b){return b?Math.round(100*a/b):0}
 function render(data){
@@ -102,6 +107,35 @@ function render(data){
 $("go").onclick=()=>{pin=$("pin").value.trim();$("err").hidden=true;load()};
 $("pin").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click()});
 $("range").onchange=load;
+// Picture packs: a JSON list of {name, src}. Each picture is fetched, shrunk to 512px WebP in the browser and stored through /api/upload with the parent code.
+const PACKS=["packs/pack2.json"];
+async function loadPacks(){
+  const box=$("packList");box.innerHTML="";let have={};
+  try{have=await (await fetch("/api/images",{cache:"no-store"})).json()}catch(e){}
+  for(const url of PACKS){
+    let pack;try{pack=await (await fetch(url)).json()}catch(e){continue}
+    const missing=pack.items.filter(it=>!have[it.name]);
+    const row=document.createElement("div");row.style.cssText="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0";
+    row.innerHTML=`<span style="flex:1"><b>${pack.title}</b><br><span class="muted">${pack.items.length-missing.length} of ${pack.items.length} installed</span></span>`;
+    if(missing.length){const b=document.createElement("button");b.textContent="Install "+missing.length+" pictures";b.onclick=()=>installPack(pack,missing,b);row.appendChild(b)}
+    box.appendChild(row);
+  }
+  $("packs").hidden=false;
+}
+async function installPack(pack,items,btn){
+  btn.disabled=true;let done=0,fail=[];
+  for(const it of items){
+    try{
+      const r=await fetch(it.src,{mode:"cors"});const blob=await r.blob();let up=blob,type=blob.type||"image/png";
+      try{const bmp=await createImageBitmap(blob);const s=512;const c=document.createElement("canvas");c.width=s;c.height=Math.round(s*bmp.height/bmp.width);c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);const w=await new Promise(res=>c.toBlob(res,"image/webp",0.86));if(w&&w.size>1000){up=w;type="image/webp"}}catch(e){}
+      const b64=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result.split(",")[1]);fr.readAsDataURL(up)});
+      const p=await fetch("/api/upload",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({pin,name:it.name,type,data:b64})});
+      if(p.ok)done++;else fail.push(it.name+" ("+p.status+")");
+    }catch(e){fail.push(it.name)}
+    btn.textContent=done+" / "+items.length+(fail.length?" · "+fail.length+" failed":"");
+  }
+  btn.textContent=fail.length?"Done. Failed: "+fail.join(", "):"All "+done+" installed";
+}
 document.addEventListener("click",async e=>{
   const a=e.target.closest("a.reset");if(!a)return;e.preventDefault();
   const kid=a.dataset.kid;
