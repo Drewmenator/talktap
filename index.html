@@ -444,8 +444,15 @@ function pick(){
   S.review=false;
   if(S.mode!=="say"&&Math.random()<0.34){const due=srDue();if(due.length){S.review=true;return due[Math.random()*due.length|0]}}
   const src=S.mode==="find"?levelItems(1):levelItems(S.settings.level);
-  const p=src.filter(i=>i!==last);
-  return p[Math.random()*p.length|0]||src[0];
+  return bagDraw("item:"+S.mode+":"+(S.mode==="find"?1:S.settings.level),src);
+}
+// Shuffle bag: every item in a level comes up once before any repeats. Bags live per child so they survive closing the app.
+function bagDraw(key,src){
+  const k=KIDS[S.kid];k.bags=k.bags||{};let bag=k.bags[key];
+  const valid=i=>i>=0&&i<src.length;
+  if(!bag||!bag.length||!bag.every(valid)){bag=shuffle(src.map((_,i)=>i));if(src.length>1&&src[bag[bag.length-1]]===last){bag.unshift(bag.pop())}}
+  const i=bag.pop();k.bags[key]=bag;save("tt.kids",KIDS);
+  return src[i]||src[0];
 }
 function distractors(item){
   // The workbook's trick: wrong answers share part of the sentence, so meaning has to do the work.
@@ -479,8 +486,7 @@ function setLevelBadge(){
 let lastScene=null;
 function askRound(){
   const L=WH_LEVELS[S.settings.wh-1];
-  const scenes=SCENES.filter(s=>s!==lastScene);
-  const sc=scenes[Math.random()*scenes.length|0];lastScene=sc;S.scene=sc;
+  const sc=bagDraw("scene",SCENES);lastScene=sc;S.scene=sc;
   const type=L.types[Math.random()*L.types.length|0];S.wh=type;
   const tiles=$("tiles"),actions=$("actions"),hint=$("hint"),pt=$("promptText"),big=$("bigPic");
   tiles.hidden=false;tiles.innerHTML="";actions.innerHTML="";big.hidden=false;pt.className="text";
