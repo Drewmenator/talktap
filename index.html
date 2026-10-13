@@ -237,7 +237,10 @@ LEVELS.forEach(L=>L.items.forEach(i=>{i.lvl=L.n}));
 const ALL=LEVELS.flatMap(L=>L.items);
 // Pictures: generated scene illustrations stored in Blob, keyed by name. Emoji stay as the fallback.
 let IMGS=(()=>{try{return JSON.parse(localStorage.getItem("tt.imgs")||"{}")}catch(e){return {}}})();
-fetch("api/images").then(r=>r.ok?r.json():null).then(m=>{if(m&&Object.keys(m).length){IMGS=m;try{localStorage.setItem("tt.imgs",JSON.stringify(m))}catch(e){}}}).catch(()=>{});
+fetch("api/images").then(r=>r.ok?r.json():null).then(m=>{if(m&&Object.keys(m).length){IMGS=m;try{localStorage.setItem("tt.imgs",JSON.stringify(m))}catch(e){}prefetchImgs(m)}}).catch(()=>{});
+// Warm the offline cache with every picture (the service worker stores Blob responses). One pass per picture set, a few at a time.
+function prefetchImgs(m){const urls=Object.values(m);const sig=urls.length+":"+urls.slice(-1)[0];if(load("tt.imgsig",null)===sig||!navigator.onLine)return;let i=0;
+  const next=()=>{if(i>=urls.length){save("tt.imgsig",sig);return}const u=urls[i++];fetch(u,{mode:"no-cors"}).catch(()=>{}).finally(()=>setTimeout(next,150))};next();next();next();}
 function imgKey(it){
   if(!it||!it.lvl)return null;const w=it.w.replace(/ /g,"_");
   if(it.lvl===2)return "job_"+w+(it.s.startsWith("She")?"_f":"_m");
@@ -491,7 +494,7 @@ function chooseWH(btn,ok,answerText){
   const stat=S.today.ask;stat[1]++;
   const firstTry=!S.triedThisRound;S.triedThisRound=true;
   const L=WH_LEVELS[S.settings.wh-1];
-  logEvent({mode:"ask",wh:S.settings.wh,item:L.ask?"Ask me: "+S.wh+" ("+S.scene.sentence+")":S.scene.q[S.wh],target:L.ask?WH_WORD[S.wh]:S.scene[S.wh].w,choice:btn.textContent,correct:ok,first_try:firstTry&&ok});
+  logEvent({mode:"ask",wh:S.settings.wh,item:L.ask?"Ask me: "+S.wh+" ("+S.scene.sentence+")":S.scene.q[S.wh],target:L.ask?WH_WORD[S.wh]:S.scene[S.wh].w,choice:btn.textContent,correct:ok,first_try:firstTry&&ok,replays:S.replays||0,ms:firstTry?Date.now()-S.roundT0:undefined});
   if(ok){
     S.locked=true;stat[0]++;btn.classList.add("good");
     [...$("tiles").children].forEach(x=>{if(x!==btn)x.classList.add("dim")});
@@ -520,7 +523,7 @@ function mk(label,cls,fn){const b=document.createElement("button");b.className=c
 // ---------- Rounds ----------
 function pickVoice2(){const v=S.settings.voice;S.roundVoice=v==="both"?(S.roundVoice==="dad"?"mum":"dad"):v}
 function newRound(){
-  S.locked=false;S.triedThisRound=false;pickVoice2();
+  S.locked=false;S.triedThisRound=false;S.replays=0;S.roundT0=Date.now();pickVoice2();
   if(S.mode==="ask"){setLevelBadge();askRound();return}
   S.item=pick();last=S.item;setLevelBadge();
   const tiles=$("tiles"),actions=$("actions"),hint=$("hint"),pt=$("promptText"),big=$("bigPic");
@@ -558,7 +561,7 @@ function choose(btn,c){
   if(S.locked)return;
   const stat=S.today[S.mode];stat[1]++;
   const firstTry=!S.triedThisRound;S.triedThisRound=true;
-  logEvent({mode:S.mode,level:S.mode==="read"?S.settings.level:1,item:S.mode==="find"?"Find the "+S.item.w:S.item.s,target:S.item.w,choice:c.w,correct:c===S.item,first_try:firstTry&&c===S.item});
+  logEvent({mode:S.mode,level:S.mode==="read"?S.settings.level:1,item:S.mode==="find"?"Find the "+S.item.w:S.item.s,target:S.item.w,choice:c.w,correct:c===S.item,first_try:firstTry&&c===S.item,replays:S.replays||0,ms:firstTry?Date.now()-S.roundT0:undefined});
   if(c===S.item){
     S.locked=true;stat[0]++;btn.classList.add("good");
     [...$("tiles").children].forEach(x=>{if(x!==btn)x.classList.add("dim")});
@@ -634,6 +637,7 @@ function endSession(){
 $("doneAgain").onclick=()=>{$("done").hidden=true;startSession();newRound()};
 
 $("speak").onclick=()=>{
+  S.replays=(S.replays||0)+1;
   if(S.mode==="ask")speak(WH_LEVELS[S.settings.wh-1].ask?"Something is missing. Ask me.":S.scene.q[S.wh]);
   else if(S.mode==="find")speak("Find the "+S.item.w);
   else if(S.mode==="read")speak(S.item.s);
