@@ -1,5 +1,5 @@
-const CACHE="talktap-v19";
-const ASSETS=["./","./index.html","./manifest.json","./voice_jessica.mp3","./voice_dad.mp3","./voice_mum.mp3","./icon-180.png","./icon-192.png","./icon-512.png","./progress.html","./app.js","./vocab.js","./clips.js"];
+const CACHE="talktap-v20";
+const ASSETS=["./","./index.html","./manifest.json","./voice_jessica.mp3","./voice_dad.mp3","./voice_mum.mp3","./voice_jessica_2.mp3","./icon-180.png","./icon-192.png","./icon-512.png","./progress.html","./app.js","./vocab.js","./clips.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 // Audio uses range requests on iOS; serve full cached file for those, otherwise cache-first with network fallback.
