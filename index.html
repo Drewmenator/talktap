@@ -181,7 +181,9 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
     <div class="row">
       <button class="btn primary" id="saveSettings">Save</button>
       <button class="btn" id="resetToday">Reset today</button>
+      <button class="btn" id="startOver">Start over for this child</button>
     </div>
+    <div class="hint" id="startOverNote" hidden></div>
     </div>
   </div>
 </div>
@@ -667,6 +669,21 @@ $("saveSettings").onclick=()=>{
   S.recent=[];S.recentAsk=[];$("sheet").hidden=true;startSession();newRound();
 };
 $("resetToday").onclick=()=>{S.today=freshToday();S.stars=0;S.streak=0;setStars();persistToday();showSettings()};
+// Start over: back to the starting level, wipe today's stars, drop unsent rounds for this child, and clear the cloud history. Two taps to confirm.
+let startOverArmed=0;
+$("startOver").onclick=async()=>{
+  const b=$("startOver"),note=$("startOverNote"),name=KIDS[S.kid].name;
+  if(!startOverArmed){startOverArmed=setTimeout(()=>{startOverArmed=0;b.textContent="Start over for this child";note.hidden=true},6000);b.textContent="Tap again to erase everything for "+name;note.hidden=false;note.textContent="Level, stars and the progress-page history for "+name+" will all go back to zero.";return}
+  clearTimeout(startOverArmed);startOverArmed=0;b.textContent="Start over for this child";b.disabled=true;
+  KIDS[S.kid]=JSON.parse(JSON.stringify(KIDS_DEFAULT[S.kid]||KIDS[S.kid]));save("tt.kids",KIDS);
+  for(let i=QUEUE.length-1;i>=0;i--)if(QUEUE[i].kid===S.kid)QUEUE.splice(i,1);save("tt.queue",QUEUE);
+  loadKid(S.kid);setStars();setLevelBadge();
+  let cloud="History on the progress page is cleared too.";
+  try{const r=await fetch("api/reset",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({pin:S.settings.pin,kid:S.kid})});if(!r.ok)cloud="Could not clear the progress page (code "+r.status+"). Use the reset link on that page."}
+  catch(e){cloud="No internet, so the progress page was not cleared. Use the reset link on that page later."}
+  b.disabled=false;note.hidden=false;note.textContent=name+" is back at the start on this iPad. "+cloud+" Other iPads keep their own level until you reset there.";
+  showSettings();
+};
 $("kidSel").onchange=()=>{syncKid();loadKid($("kidSel").value);setStars();setLevelBadge();$("whoBtn").textContent=KIDS[S.kid].emoji+" "+KIDS[S.kid].name;showSettings()};
 // Child picker
 function showPicker(){
