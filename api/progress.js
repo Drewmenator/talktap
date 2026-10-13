@@ -22,7 +22,7 @@ async function main(req, res) {
   events.sort((a, b) => a.client_ts < b.client_ts ? -1 : 1);
   const kids = {};
   for (const e of events) {
-    const k = kids[e.kid] ||= { kid: e.kid, days: {}, modes: {}, said: {}, trouble: {}, sessions: {}, level: null, wh: null, last: null, total: 0, indep: 0, indepN: 0, ms: [], rev: 0, revN: 0 };
+    const k = kids[e.kid] ||= { kid: e.kid, days: {}, modes: {}, said: {}, trouble: {}, sessions: {}, level: null, wh: null, last: null, total: 0, indep: 0, indepN: 0, ms: [], rev: 0, revN: 0, skills: {}, requests: {}, said: {}, tried: {} };
     k.total++; k.last = e.client_ts;
     if (e.level) k.level = e.level; if (e.wh) k.wh = e.wh;
     const d = k.days[e.day] ||= { day: e.day, tries: 0, right: 0, first: 0, said: 0, sessions: new Set() };
@@ -30,9 +30,14 @@ async function main(req, res) {
     const m = k.modes[e.mode] ||= { mode: e.mode, tries: 0, right: 0, first: 0 };
     m.tries++; if (e.correct || e.score > 0) m.right++; if (e.first_try) m.first++;
     if (e.review && e.mode !== "say") { k.revN++; if (e.first_try) k.rev++; }
+    // Skills: hear (Find it, Do it), read (Read it, Build it), say (Say it), understand (Ask it, Feelings, What next), request (needs board)
+    const SK = { find: "hear", do: "hear", read: "read", build: "read", say: "say", ask: "understand", feel: "understand", next: "understand", need: "request" };
+    const sk = e.skill || SK[e.mode]; if (sk) { const s = k.skills[sk] ||= { skill: sk, tries: 0, first: 0, right: 0 }; s.tries++; if (e.first_try) s.first++; if (e.correct || e.score > 0) s.right++; }
+    if (e.mode === "need" && e.target) k.requests[e.target] = (k.requests[e.target] || 0) + 1;
+    if (e.mode === "say" && e.score === 1 && e.target) k.tried[e.target] = (k.tried[e.target] || 0) + 1;
     if (e.mode !== "say" && typeof e.replays === "number" && typeof e.ms === "number") { k.indepN++; if (e.first_try && e.replays === 0) k.indep++; if (e.ms > 0 && e.ms < 60000) k.ms.push(e.ms); }
     if (e.mode === "say" && e.score === 2 && e.target) k.said[e.target] = (k.said[e.target] || 0) + 1;
-    if (e.mode !== "say" && e.correct === false && e.item) { const t = k.trouble[e.item] ||= { item: e.item, wrong: 0, right: 0 }; t.wrong++; }
+    if (e.mode !== "say" && e.correct === false && e.item) { const t = k.trouble[e.item] ||= { item: e.item, target: e.target, wrong: 0, right: 0 }; t.wrong++; }
     if (e.mode !== "say" && e.correct === true && e.item) { const t = k.trouble[e.item] ||= { item: e.item, wrong: 0, right: 0 }; t.right++; }
     const s = k.sessions[e.session_id || e.day] ||= { first: e.client_ts, last: e.client_ts, day: e.day };
     if (e.client_ts > s.last) s.last = e.client_ts; if (e.client_ts < s.first) s.first = e.client_ts;
@@ -42,7 +47,10 @@ async function main(req, res) {
     for (const s of Object.values(k.sessions)) { const mins = Math.min((Date.parse(s.last) - Date.parse(s.first)) / 60000 + 0.5, 60); minutesByDay[s.day] = (minutesByDay[s.day] || 0) + mins; }
     return {
       kid: k.kid, total: k.total, level: k.level, wh: k.wh, last: k.last,
-      indep: k.indep, indepN: k.indepN, rev: k.rev, revN: k.revN, medianMs: k.ms.length ? k.ms.sort((a, b) => a - b)[Math.floor(k.ms.length / 2)] : null,
+      indep: k.indep, indepN: k.indepN, rev: k.rev, revN: k.revN,
+      skills: ['hear','read','say','understand','request'].filter(x => k.skills[x]).map(x => k.skills[x]),
+      requests: Object.entries(k.requests).sort((a, b) => b[1] - a[1]).map(([w, n]) => ({ word: w, times: n })),
+      tried: Object.entries(k.tried).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([w, n]) => ({ word: w, times: n })), medianMs: k.ms.length ? k.ms.sort((a, b) => a - b)[Math.floor(k.ms.length / 2)] : null,
       days: Object.values(k.days).sort((a, b) => a.day < b.day ? -1 : 1).map(d => ({ day: d.day, tries: d.tries, right: d.right, first: d.first, said: d.said, minutes: Math.round(minutesByDay[d.day] || 0) })),
       modes: MODES.filter(m => k.modes[m]).map(m => k.modes[m]),
       said: Object.entries(k.said).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([w, n]) => ({ word: w, times: n })),

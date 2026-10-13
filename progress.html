@@ -63,8 +63,9 @@ a.reset{color:var(--muted);font-weight:700}
 </div>
 <script>
 const $=id=>document.getElementById(id);
-const NAMES={oba:"Oba",june:"June"};const MODE={find:"Find it",read:"Read it",say:"Say it",ask:"Ask it"};
-const LEVELS=["One word","He is / She is","I can","Verb + thing","Who is doing it","Describe it"];
+const NAMES={oba:"Oba",june:"June"};const MODE={find:"Find it",read:"Read it",say:"Say it",ask:"Ask it",build:"Build it",next:"What next",feel:"Feelings",do:"Do it",need:"I need"};
+const SKILL={hear:"Understands when heard",read:"Recognises in print",say:"Says it (parent scored)",understand:"Answers questions and sequences",request:"Asks for what he needs"};
+const LEVELS=["Words","Two words","Sentences","Describe","Ask and answer"];
 const WH=["Answer: what, who, where","Answer: add when and how","Answer: mixed choices","Ask me: pick the question word"];
 let pin="";
 try{pin=sessionStorage.getItem("tt.pin")||""}catch(e){}
@@ -76,6 +77,15 @@ async function load(){
   try{sessionStorage.setItem("tt.pin",pin)}catch(e){}
   $("gate").hidden=true;$("controls").hidden=false;render(data);loadPacks();
 }
+// Three everyday prompts built from what went well and what did not, so practice moves off the iPad.
+function homeTips(k){
+  const good=(k.said||[]).slice(0,2).map(s=>s.word.replace(/\.$/,""));const hard=(k.trouble||[]).slice(0,2).map(t=>t.target||t.item.replace(/^Find the |\.$/g,""));
+  const tips=[];
+  for(const w of good)tips.push(`He said "${w}". Use it at the table: hold it up, wait, let him ask.`);
+  for(const w of hard)tips.push(`"${w}" keeps missing. Point to the real thing and name it twice a day.`);
+  if(!tips.length)tips.push("Name one thing at breakfast and wait for him to point or say it. Then give it. That is the whole exercise.");
+  return tips.slice(0,3).join(" ");
+}
 function pct(a,b){return b?Math.round(100*a/b):0}
 function render(data){
   const root=$("report");root.innerHTML="";
@@ -84,7 +94,7 @@ function render(data){
     const name=NAMES[k.kid]||k.kid;const el=document.createElement("section");el.className="kid";
     const tries=k.days.reduce((a,d)=>a+d.tries,0),right=k.days.reduce((a,d)=>a+d.right,0),first=k.days.reduce((a,d)=>a+d.first,0),mins=k.days.reduce((a,d)=>a+d.minutes,0),said=k.days.reduce((a,d)=>a+d.said,0);
     const daysActive=k.days.length;const maxMin=Math.max(1,...k.days.map(d=>d.minutes));
-    el.innerHTML=`<header><h2>${name}</h2><span class="sub">Level ${k.level||1}: ${LEVELS[(k.level||1)-1]} · WH stage ${k.wh||1}: ${WH[(k.wh||1)-1]}</span></header>
+    el.innerHTML=`<header><h2>${name}</h2><span class="sub">Stage ${k.level||1}: ${LEVELS[(k.level||1)-1]||""} · WH stage ${k.wh||1}: ${WH[(k.wh||1)-1]}</span></header>
     <div class="tiles">
       <div class="tile"><b>${daysActive}</b><span>days practised</span></div>
       <div class="tile"><b>${mins}</b><span>minutes</span></div>
@@ -95,11 +105,15 @@ function render(data){
       <div class="tile"><b>${k.mastered}</b><span>items mastered</span></div>
     </div>
     <div><h3>Minutes per day</h3><div class="bars">${k.days.slice(-14).map(d=>`<div class="bar"><span>${d.day.slice(5)}</span><div class="track"><div class="fill" style="width:${pct(d.minutes,maxMin)}%"></div></div><span class="n">${d.minutes} min</span></div>`).join("")}</div></div>
-    <div><h3>Accuracy by mode (first try)</h3><div class="bars">${k.modes.map(m=>`<div class="bar"><span>${MODE[m.mode]||m.mode}</span><div class="track"><div class="fill acc" style="width:${pct(m.first,m.tries)}%"></div></div><span class="n">${pct(m.first,m.tries)}% · ${m.tries}</span></div>`).join("")||'<span class="muted">No answers yet.</span>'}</div></div>
+    <div><h3>By skill (right first time)</h3><div class="bars">${(k.skills||[]).map(s=>`<div class="bar"><span style="min-width:86px">${SKILL[s.skill]||s.skill}</span><div class="track"><div class="fill acc" style="width:${s.skill==="request"?100:pct(s.first,s.tries)}%"></div></div><span class="n">${s.skill==="request"?s.tries+" asks":pct(s.first,s.tries)+"% · "+s.tries}</span></div>`).join("")||'<span class="muted">No answers yet.</span>'}</div></div>
+    <div><h3>Accuracy by activity (first try)</h3><div class="bars">${k.modes.map(m=>`<div class="bar"><span>${MODE[m.mode]||m.mode}</span><div class="track"><div class="fill acc" style="width:${pct(m.first,m.tries)}%"></div></div><span class="n">${pct(m.first,m.tries)}% · ${m.tries}</span></div>`).join("")||'<span class="muted">No answers yet.</span>'}</div></div>
     <div class="two">
       <div><h3>Practise these at home</h3>${k.trouble.length?`<ul>${k.trouble.map(t=>`<li>${t.item} <span class="muted">(${t.wrong} wrong, ${t.right} right)</span></li>`).join("")}</ul>`:'<span class="muted">Nothing is repeatedly wrong. Good sign.</span>'}</div>
-      <div><h3>Words said</h3>${k.said.length?k.said.map(s=>`<span class="chip">${s.word} <small>×${s.times}</small></span>`).join(""):'<span class="muted">Mark "He said it" in Say it to see them here.</span>'}</div>
+      <div><h3>Words said</h3>${k.said.length?k.said.map(s=>`<span class="chip">${s.word} <small>×${s.times}</small></span>`).join(""):'<span class="muted">Mark "He said it" in Say it to see them here.</span>'}
+      ${(k.tried||[]).length?`<h3 style="margin-top:12px">Tried or pointed</h3>${k.tried.map(s=>`<span class="chip">${s.word} <small>×${s.times}</small></span>`).join("")}`:""}</div>
     </div>
+    ${(k.requests||[]).length?`<div><h3>Asked for (needs board)</h3>${k.requests.map(s=>`<span class="chip">${s.word} <small>×${s.times}</small></span>`).join("")}</div>`:""}
+    <div><h3>This week at home</h3><p class="muted" style="margin:0">${homeTips(k)}</p></div>
     <div class="muted">Last activity: ${k.last?new Date(k.last).toLocaleString():"none"} · <a href="#" class="reset" data-kid="${k.kid}">Reset ${name}\u2019s history</a></div>`;
     root.appendChild(el);
   }

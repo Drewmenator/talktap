@@ -1,7 +1,7 @@
 // Appends a batch of answer events to one JSON file per child, per day, per device.
 import { blobList, blobPut, blobGetJson } from "./_blob.js";
 const PREFIX = process.env.BLOB_PREFIX || "tt";
-const ALLOWED = ["kid","mode","level","wh","item","target","choice","correct","first_try","score","voice","client_ts","session_id"];
+const ALLOWED = ["kid","mode","level","wh","item","target","choice","correct","first_try","score","voice","client_ts","session_id","replays","ms","review","skill","stage","cat"];
 export default async function handler(req, res) {
   try { return await main(req, res); } catch (err) { res.setHeader("Access-Control-Allow-Origin", "*"); return res.status(500).json({ error: String(err && err.message || err) }); }
 }

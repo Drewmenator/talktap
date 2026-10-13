@@ -10,7 +10,40 @@
 <meta name="theme-color" content="#eaf4ff">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}
+/* Mode bar: eight activities, scrolls sideways on narrow screens. Parents can hide any of them. */
+.modes{overflow-x:auto;max-width:100%;scrollbar-width:none;flex-wrap:nowrap}
+.modes::-webkit-scrollbar{display:none}
+.modes button{white-space:nowrap;padding:10px 14px;font-size:1rem}
+.need{background:var(--panel);padding:8px 14px;border-radius:999px;font-family:var(--display);font-weight:600;font-size:1rem;color:var(--ink);border:3px solid var(--accent)}
+/* Word tiles (Build a Sentence, Understand Feelings) */
+.tile.word{flex-direction:column;font-family:var(--display);font-weight:600;font-size:clamp(1.6rem,4.5vw,3rem);padding:10px;text-align:center}
+.tile.word small{display:block;font-size:.55em;color:var(--muted);font-family:var(--body);font-weight:700}
+.tile .lbl{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-family:var(--display);font-weight:600;font-size:clamp(1rem,2.5vw,1.5rem);color:var(--ink);background:color-mix(in srgb,var(--panel) 80%,transparent);padding:4px 8px;border-radius:12px;margin:0 10px}
+.slots{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:64px}
+.slot{min-width:90px;padding:12px 18px;border-radius:16px;border:3px dashed var(--tile-edge);font-family:var(--display);font-weight:600;font-size:clamp(1.4rem,4vw,2.4rem);text-align:center;color:var(--ink);background:var(--panel)}
+.slot.filled{border-style:solid;border-color:var(--good)}
+.pair{display:flex;gap:14px;align-items:center;margin-left:auto}
+.pair figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.pair img{height:clamp(110px,22vh,240px);width:auto;border-radius:16px}
+.pair figcaption{font-family:var(--display);font-weight:600;font-size:1rem;color:var(--muted)}
+.pair .arrow{font-size:2rem;color:var(--muted)}
+/* Needs board: big tiles, one tap speaks. */
+.needs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;width:min(900px,100%)}
+.needs .tile{aspect-ratio:1.15;font-size:clamp(2.6rem,8vw,5rem);flex-direction:column;gap:6px}
+.needs .tile .lbl{position:static;background:none;margin:0;font-size:clamp(1.1rem,2.6vw,1.6rem)}
+.needs .tile img{position:static;width:60%;height:60%}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chips label{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:2px solid var(--tile-edge);border-radius:999px;padding:6px 12px;margin:0;font-weight:700;font-size:.95rem}
+.chips input{width:auto}
+.mywords{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.mywords .w{display:flex;gap:10px;align-items:center;background:var(--bg);border-radius:14px;padding:8px 12px}
+.mywords .w img{width:48px;height:48px;object-fit:cover;border-radius:10px}
+.mywords .w span{flex:1;font-weight:700}
+.mywords .w button{color:var(--muted);font-weight:700}
+.photo{width:120px;height:120px;border-radius:16px;background:var(--bg);border:2px dashed var(--tile-edge);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:2.5rem}
+.photo img{width:100%;height:100%;object-fit:cover}
+</style>
 </head>
 <body>
 <title>Talk Tap</title>
@@ -49,13 +82,13 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .tile{background:var(--tile);border:4px solid var(--tile-edge);border-radius:28px;display:flex;align-items:center;justify-content:center;font-size:clamp(3.2rem,11vw,8rem);line-height:1;transition:transform .12s;white-space:nowrap}
 .tile:active{transform:scale(.96)}
 .tile.good{border-color:var(--good);background:color-mix(in srgb,var(--good) 18%,var(--tile));animation:pop .5s}
-.tile.bad{border-color:var(--bad);animation:shake .4s;opacity:.55}
+.tile.bad{animation:wobble .5s;opacity:.6}
 .tile.dim{opacity:.35}
 .tile{min-height:0;min-width:0;overflow:hidden;position:relative}
 .tile img{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);object-fit:contain;border-radius:22px;pointer-events:none}
 .prompt .big img{height:clamp(140px,30vh,340px);width:auto;max-width:48vw;object-fit:contain;border-radius:18px;display:block}
 @keyframes pop{30%{transform:scale(1.08)}}
-@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes wobble{25%{transform:rotate(-2deg)}75%{transform:rotate(2deg)}}
 .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .btn{padding:16px 26px;border-radius:20px;font-family:var(--display);font-weight:600;font-size:1.25rem;background:var(--panel);color:var(--ink);border:3px solid var(--tile-edge);text-decoration:none}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;box-shadow:0 5px 0 #c96a0f}
@@ -93,12 +126,8 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 
 <div class="app">
   <div class="top">
-    <div class="modes" role="tablist" aria-label="Mode">
-      <button id="m-find" aria-pressed="true">👂 Find it</button>
-      <button id="m-read" aria-pressed="false">📖 Read it</button>
-      <button id="m-say" aria-pressed="false">🗣️ Say it</button>
-      <button id="m-ask" aria-pressed="false">❓ Ask it</button>
-    </div>
+    <div class="modes" role="tablist" aria-label="Activity" id="modeBar"></div>
+    <button class="need" id="needBtn" aria-label="I need">🙋 I need</button>
     <button class="lvl" id="whoBtn">👤</button>
     <div class="lvl" id="lvlBadge">Level 1</div>
     <div class="stars" id="stars">⭐ 0</div>
@@ -110,27 +139,38 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
       <button class="say" id="speak" aria-label="Hear it">🔊</button>
       <div class="text" id="promptText">Tap the speaker</div>
       <div class="big" id="bigPic" hidden></div>
+      <div class="pair" id="pair" hidden></div>
     </div>
+    <div class="slots" id="slots" hidden></div>
     <div class="tiles" id="tiles"></div>
     <div class="actions" id="actions"></div>
     <div class="hint" id="hint"></div>
   </div>
 </div>
 
-<!-- Child picker -->
+<!-- First run: parent code -->
 <div class="overlay" id="setup" hidden>
   <h2>Set a parent code</h2>
   <p style="max-width:420px;text-align:center">Four digits only you and your wife know. It opens settings and the progress page, and it must be the same code you set in Vercel (PARENT_PIN).</p>
-  <input class="pin" id="setupPin" inputmode="numeric" placeholder="••••" aria-label="Parent code" style="font-size:2rem;width:200px;text-align:center;letter-spacing:.4em;padding:14px;border-radius:14px;border:2px solid var(--edge)">
+  <input class="pin" id="setupPin" inputmode="numeric" placeholder="••••" aria-label="Parent code" style="font-size:2rem;width:200px;text-align:center;letter-spacing:.4em;padding:14px;border-radius:14px;border:2px solid var(--tile-edge)">
   <div class="actions"><button class="btn primary" id="setupGo">Save code</button></div>
   <div class="hint" id="setupErr" hidden>Four digits, please.</div>
 </div>
+
+<!-- Child picker -->
 <div class="overlay" id="whoPick" hidden>
   <h2>Who is playing?</h2>
   <div class="actions" id="whoBtns"></div>
 </div>
 
-<!-- Streak reward: in-app bubble pop, so he never has to leave the app -->
+<!-- Needs board: always one tap away, never scored -->
+<div class="overlay" id="needs" hidden>
+  <h2 id="needsTitle">What do you need?</h2>
+  <div class="needs" id="needGrid"></div>
+  <div class="actions"><button class="btn" id="needBack" hidden>◀ Back</button><button class="btn primary" id="needClose">Done</button></div>
+</div>
+
+<!-- Streak reward: in-app bubble pop -->
 <div class="overlay" id="celebrate" hidden>
   <div id="bubbles"></div>
   <div class="bubbleUI">
@@ -165,13 +205,17 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
     <p>Sit beside your child for Say it. The app models the word; you decide whether they tried. Any attempt at the sound counts early on.</p>
     <label for="kidSel">Settings for</label>
     <select id="kidSel"></select>
-    <label for="level">Level (Read it and Say it)</label>
+    <label for="level">Stage (Read it, Say it, Build a Sentence, Follow Instructions)</label>
     <select id="level"></select>
     <label for="whLevel">Ask it stage (WH questions)</label>
     <select id="whLevel"></select>
     <label for="autoLevel">Move up automatically</label>
     <select id="autoLevel"><option value="1" selected>Yes, after 8 of the last 10 right</option><option value="0">No, I will set it</option></select>
-    <label for="sessionLen">Session length</label>
+    <label>Activities shown</label>
+    <div class="chips" id="modeChips"></div>
+    <label>Word groups in play</label>
+    <div class="chips" id="catChips"></div>
+    <label for="sessionLen">Session length (the child sees no clock; the session simply ends)</label>
     <select id="sessionLen"><option value="0">No limit</option><option value="5">5 minutes</option><option value="10" selected>10 minutes</option><option value="15">15 minutes</option><option value="20">20 minutes</option></select>
     <label for="streakLen">Streak length for a bubble break</label>
     <select id="streakLen"><option>3</option><option selected>5</option><option>8</option><option>10</option></select>
@@ -183,7 +227,23 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
     <select id="rate"><option value="0.75">Slow</option><option value="0.9" selected>Normal</option><option value="1">Quick</option></select>
     <label for="pinNew">Parent code</label>
     <input id="pinNew" inputmode="numeric" placeholder="4 digits">
-    <h3 style="margin-top:20px">Today on this iPad</h3><p>Full history for both children: <a href="progress.html" target="_blank" rel="noopener">progress page</a> (same parent code).</p>
+
+    <h3 style="margin-top:22px">My words</h3>
+    <p>Add words from your home: a photo, the word, and the sentences it grows into. Both iPads get them. Record the word in your own voice if you like; otherwise the iPad reads it.</p>
+    <div class="mywords" id="myWords"></div>
+    <div id="addWord" style="margin-top:10px;display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:start">
+      <label class="photo" for="cwPhoto" id="cwPhotoBox">📷<input id="cwPhoto" type="file" accept="image/*" capture="environment" hidden></label>
+      <div>
+        <input id="cwWord" placeholder="Word, e.g. jollof rice">
+        <select id="cwCat" style="margin-top:8px"></select>
+        <input id="cwTip" placeholder="At home: e.g. ask for it at dinner" style="margin-top:8px">
+      </div>
+      <div style="grid-column:1/-1" id="cwStages"></div>
+      <div style="grid-column:1/-1" class="row"><button class="btn" id="cwRec">🎙️ Record the word</button><button class="btn primary" id="cwSave">Add word</button></div>
+      <div style="grid-column:1/-1" class="hint" id="cwNote" hidden></div>
+    </div>
+
+    <h3 style="margin-top:22px">Today on this iPad</h3><p>Full history for both children: <a href="progress.html" target="_blank" rel="noopener">progress page</a> (same parent code).</p>
     <div class="stat" id="statGrid"></div>
     <div class="row">
       <button class="btn primary" id="saveSettings">Save</button>
@@ -195,555 +255,9 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
   </div>
 </div>
 
-<script>
-// ---------- Content ----------
-// Sentence ladder, in the order the workbook builds it. Each level adds one thing the reader must hold in mind.
-// L1 one word. L2 he/she + job (pronoun matters). L3 "I can" + verb. L4 verb + object (two things). L5 subject + verb. L6 size, colour, number.
-const LEVELS=[
- {n:1,name:"One word",items:[
-  ["elephant","🐘"],["dog","🐶"],["cat","🐱"],["horse","🐴"],["monkey","🐵"],["fish","🐟"],["bird","🐦"],["lion","🦁"],["cow","🐮"],
-  ["apple","🍎"],["banana","🍌"],["pizza","🍕"],["rice","🍚"],["bread","🍞"],["egg","🥚"],
-  ["ball","⚽"],["car","🚗"],["bus","🚌"],["book","📕"],["bed","🛏️"],["shoe","👟"],["hat","🧢"],["house","🏠"],["cup","🥤"]
- ].map(([w,e])=>({w,e,s:w,q:"What is this?"}))},
- {n:2,name:"He is / She is",items:[
-  ["doctor","👩‍⚕️","She is a doctor."],["doctor","👨‍⚕️","He is a doctor."],
-  ["chef","👨‍🍳","He is a chef."],["chef","👩‍🍳","She is a chef."],
-  ["pilot","👨‍✈️","He is a pilot."],["pilot","👩‍✈️","She is a pilot."],
-  ["firefighter","👩‍🚒","She is a firefighter."],["firefighter","👨‍🚒","He is a firefighter."],
-  ["police officer","👮‍♂️","He is a police officer."],["police officer","👮‍♀️","She is a police officer."],
-  ["farmer","👩‍🌾","She is a farmer."],["farmer","👨‍🌾","He is a farmer."],
-  ["teacher","👨‍🏫","He is a teacher."],["teacher","👩‍🏫","She is a teacher."],
-  ["builder","👷‍♀️","She is a builder."],["builder","👷‍♂️","He is a builder."],
-  ["scientist","👩‍🔬","She is a scientist."],["scientist","👨‍🔬","He is a scientist."]
- ].map(([w,e,s])=>({w,e,s,q:s.startsWith("She")?"What is she?":"What is he?"}))},
- {n:3,name:"I can",items:[
-  ["jump","🤸"],["run","🏃"],["swim","🏊"],["sing","🎤"],["climb","🧗"],["kick","🦵"],["sleep","😴"],["read","📖"],
-  ["dance","💃"],["cook","🍳"],["paint","🎨"],["ride","🚴"],["write","✍️"],["drink","🥤"],["eat","🍽️"],["wave","👋"]
- ].map(([w,e])=>({w,e,s:"I can "+w+".",q:"What can I do?"}))},
- {n:4,name:"Verb + thing",items:[
-  ["feeding the elephant","🐘🍌"],["feeding the dog","🐶🦴"],["feeding the cat","🐱🐟"],["feeding the bird","🐦🌾"],
-  ["washing the car","🚗🧽"],["washing the dog","🐶🛁"],["washing the dishes","🍽️🧼"],
-  ["eating the apple","🍎😋"],["eating the pizza","🍕😋"],["eating the banana","🍌😋"],
-  ["kicking the ball","⚽🦵"],["throwing the ball","⚽🤾"],["holding the ball","⚽🙌"],
-  ["reading the book","📕👀"],["holding the cup","🥤✋"],["building a house","🏠🔨"]
- ].map(([w,e])=>({w,e,s:"I am "+w+".",q:"What am I doing?"}))},
- {n:5,name:"Who is doing it",items:[
-  ["bird is flying","🐦✈️"],["bird is nesting","🐦🪺"],["fish is swimming","🐟🌊"],["dog is running","🐶💨"],["dog is sleeping","🐶💤"],
-  ["cat is sleeping","🐱💤"],["cat is jumping","🐱⬆️"],["boy is eating","👦🍽️"],["boy is reading","👦📖"],["girl is singing","👧🎤"],
-  ["girl is painting","👧🎨"],["baby is crying","👶😢"],["baby is laughing","👶😂"],["man is cooking","👨🍳"],["woman is driving","👩🚗"]
- ].map(([w,e])=>({w,e,s:"The "+w+".",q:"What is happening?"}))},
- {n:6,name:"Describe it",items:[
-  ["big dog","🐶⬆️","This is a big dog."],["small dog","🐶⬇️","This is a small dog."],["red apple","🍎","This is a red apple."],["green apple","🍏","This is a green apple."],
-  ["red car","🚗","This is a red car."],["blue car","🚙","This is a blue car."],
-  ["one ball","⚽","I see one ball."],["two balls","⚽⚽","I see two balls."],["three fish","🐟🐟🐟","I see three fish."],["one fish","🐟","I see one fish."],
-  ["hot soup","🍲🔥","The soup is hot."],["cold drink","🥤🧊","The drink is cold."],
-  ["happy boy","👦😀","The boy is happy."],["sad boy","👦😢","The boy is sad."],["yellow hat","🧢","This is a yellow hat."],["black hat","🎩","This is a black hat."]
- ].map(([w,e,s])=>({w,e,s,q:"What do you see?"}))},
-];
-LEVELS.forEach(L=>L.items.forEach(i=>{i.lvl=L.n}));
-const ALL=LEVELS.flatMap(L=>L.items);
-// Pictures: generated scene illustrations stored in Blob, keyed by name. Emoji stay as the fallback.
-let IMGS=(()=>{try{return JSON.parse(localStorage.getItem("tt.imgs")||"{}")}catch(e){return {}}})();
-fetch("api/images").then(r=>r.ok?r.json():null).then(m=>{if(m&&Object.keys(m).length){IMGS=m;try{localStorage.setItem("tt.imgs",JSON.stringify(m))}catch(e){}prefetchImgs(m)}}).catch(()=>{});
-// Warm the offline cache with every picture (the service worker stores Blob responses). One pass per picture set, a few at a time.
-function prefetchImgs(m){const urls=Object.values(m);const sig=urls.length+":"+urls.slice(-1)[0];if(load("tt.imgsig",null)===sig||!navigator.onLine)return;let i=0;
-  const next=()=>{if(i>=urls.length){save("tt.imgsig",sig);return}const u=urls[i++];fetch(u,{mode:"no-cors"}).catch(()=>{}).finally(()=>setTimeout(next,150))};next();next();next();}
-function imgKey(it){
-  if(!it||!it.lvl)return null;const w=it.w.replace(/ /g,"_");
-  if(it.lvl===2)return "job_"+w+(it.s.startsWith("She")?"_f":"_m");
-  if(it.lvl===3)return "can_"+w;if(it.lvl===4)return "vo_"+w;if(it.lvl===5)return "sv_"+w;if(it.lvl===6)return "d6_"+w;
-  return null;
-}
-function imgUrl(it){const k=imgKey(it);return k&&IMGS[k]||null}
-function fillTile(b,it){const u=imgUrl(it);if(u){b.innerHTML="";const im=document.createElement("img");im.src=u;im.alt=it.w;b.appendChild(im)}else b.textContent=it.e}
-function fillBig(el,it,fallbackText){const u=it&&imgUrl(it);if(u){el.innerHTML="";const im=document.createElement("img");im.src=u;im.alt=it.w;el.appendChild(im)}else el.textContent=fallbackText}
-
-// ---------- WH scenes ----------
-// Each scene has one answer per question word. who = person/animal, what = thing, where = place, when = time of day, how = feeling.
-const WH_ORDER=["what","who","where","when","how"];   // typical order children learn them
-const WH_WORD={what:"What?",who:"Who?",where:"Where?",when:"When?",how:"How?"};
-const P=(w,e)=>({w,e});
-const WHO={boy:P("the boy","👦"),girl:P("the girl","👧"),mum:P("Mum","👩"),dad:P("Dad","👨"),baby:P("the baby","👶"),dog:P("the dog","🐶"),cat:P("the cat","🐱"),teacher:P("the teacher","👩‍🏫"),grandma:P("Grandma","👵")};
-const WHAT={apple:P("an apple","🍎"),book:P("a book","📕"),ball:P("a ball","⚽"),rice:P("rice","🍚"),car:P("the car","🚗"),cup:P("a cup","🥤"),bone:P("a bone","🦴"),bread:P("bread","🍞"),phone:P("the iPad","📱"),pencil:P("a pencil","✏️"),water:P("water","💧"),toothbrush:P("a toothbrush","🪥")};
-const WHERE={kitchen:P("in the kitchen","🍳"),bed:P("in bed","🛏️"),park:P("at the park","🌳"),school:P("at school","🏫"),road:P("on the road","🛣️"),pool:P("at the pool","🏊"),sofa:P("on the sofa","🛋️"),garden:P("in the garden","🌻"),bathroom:P("in the bathroom","🚿"),car:P("in the car","🚗")};
-const WHEN={morning:P("in the morning","🌅"),afternoon:P("in the afternoon","☀️"),night:P("at night","🌙"),bedtime:P("at bedtime","🛌")};
-const HOW={happy:P("happy","😀"),sad:P("sad","😢"),tired:P("tired","🥱"),angry:P("angry","😠"),scared:P("scared","😨")};
-// [who, verb, what, where, when, how]
-const SCENES=[
- ["boy","eating","apple","kitchen","morning","happy"],
- ["girl","reading","book","bed","night","tired"],
- ["dog","chewing","bone","garden","afternoon","happy"],
- ["mum","cooking","rice","kitchen","afternoon","happy"],
- ["dad","driving","car","road","morning","happy"],
- ["baby","holding","cup","bed","night","sad"],
- ["teacher","holding","pencil","school","morning","happy"],
- ["boy","kicking","ball","park","afternoon","happy"],
- ["girl","watching","phone","sofa","night","happy"],
- ["cat","holding","ball","sofa","afternoon","tired"],
- ["grandma","drinking","water","garden","morning","happy"],
- ["dad","holding","toothbrush","bathroom","bedtime","tired"],
- ["boy","eating","bread","car","morning","sad"],
- ["girl","reading","book","school","afternoon","happy"],
- ["mum","driving","car","road","night","angry"],
- ["baby","holding","ball","park","afternoon","scared"],
-].map(([who,verb,what,where,when,how],idx)=>{
-  const s={who:WHO[who],what:WHAT[what]||WHERE[what],where:WHERE[where],when:WHEN[when],how:HOW[how],verb};
-  s.img="wh_"+["boy","girl","dog","mum","dad","baby","teacher","boy2","girl2","cat","grandma","dad2","boy3","girl3","mum2","baby2"][idx];
-  s.sentence=cap(s.who.w)+" is "+verb+" "+s.what.w+" "+s.where.w+" "+s.when.w+".";
-  s.pic=s.who.e+s.what.e+s.where.e+s.when.e;
-  s.q={who:"Who is "+verb+"?",what:"What is "+s.who.w+" "+verb+"?",where:"Where is "+s.who.w+"?",when:"When is "+s.who.w+" "+verb+"?",how:"How does "+s.who.w+" feel?"};
-  s.a={who:cap(s.who.w)+".",what:cap(s.what.w)+".",where:cap(s.where.w)+".",when:cap(s.when.w)+".",how:cap(s.who.w)+". Feels "+s.how.w+"."};
-  return s;
-});
-function cap(t){return t[0].toUpperCase()+t.slice(1)}
-const WH_POOL={who:Object.values(WHO),what:Object.values(WHAT),where:Object.values(WHERE),when:Object.values(WHEN),how:Object.values(HOW)};
-const WH_LEVELS=[
-  {n:1,name:"Answer: what, who, where",types:["what","who","where"],mixed:false},
-  {n:2,name:"Answer: add when and how",types:WH_ORDER,mixed:false},
-  {n:3,name:"Answer: mixed choices",types:WH_ORDER,mixed:true},
-  {n:4,name:"Ask me: pick the question word",types:WH_ORDER,ask:true},
-];
-
-// ---------- State ----------
-const S = { mode:"find", stars:0, streak:0, item:null, choices:[], locked:false, recent:[], recentAsk:[], sessionEnd:0, timer:null, scene:null, wh:null,
-  settings:{name:"",reward:"",streak:5,rate:0.9,level:1,auto:1,session:10,pin:"",wh:1,voice:"jessica",v:3},
-  today:{find:[0,0],read:[0,0],say:[0,0],ask:[0,0]}, kid:null };
-const KIDS_DEFAULT={oba:{name:"Oba",emoji:"🧒",level:1,wh:1,auto:1},june:{name:"June",emoji:"👧",level:3,wh:2,auto:1}};
-const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
-const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-{const g=load("tt.settings",{});delete g.name;delete g.level;delete g.wh;delete g.auto;if(g.v!==2&&g.v!==3){g.voice="jessica";g.v=2}if(g.v!==3){if(g.pin==="2468")g.pin="";g.v=3}S.settings={...S.settings,...g}}
-const dayKey=new Date().toDateString();
-const KIDS=load("tt.kids",null)||JSON.parse(JSON.stringify(KIDS_DEFAULT));
-for(const k in KIDS_DEFAULT)if(!KIDS[k])KIDS[k]=JSON.parse(JSON.stringify(KIDS_DEFAULT[k]));
-const freshToday=()=>({find:[0,0],read:[0,0],say:[0,0],ask:[0,0]});
-function loadKid(id){
-  const k=KIDS[id];S.kid=id;
-  S.settings.name=k.name;S.settings.level=k.level||1;S.settings.wh=k.wh||1;S.settings.auto=k.auto??1;
-  S.today=(k.day===dayKey&&k.today)?{...freshToday(),...k.today}:freshToday();
-  S.stars=k.day===dayKey?(k.stars||0):0;S.streak=0;S.recent=[];S.recentAsk=[];
-  save("tt.kid",id);
-}
-function syncKid(){
-  const k=KIDS[S.kid];if(!k)return;
-  k.level=S.settings.level;k.wh=S.settings.wh;k.auto=S.settings.auto;k.today=S.today;k.stars=S.stars;k.day=dayKey;
-  save("tt.kids",KIDS);
-}
-function persistToday(){syncKid()}
-
-// ---------- Progress log (queued locally, sent to /api/log when online) ----------
-const DEVICE=(()=>{let d=load("tt.device",null);if(!d){d=Math.random().toString(36).slice(2,10);save("tt.device",d)}return d})();
-let SESSION=Date.now().toString(36);
-const QUEUE=load("tt.queue",[]);
-function logEvent(e){
-  QUEUE.push({...e,kid:S.kid,client_ts:new Date().toISOString(),session_id:SESSION,voice:S.roundVoice||"jessica"});
-  if(QUEUE.length>400)QUEUE.splice(0,QUEUE.length-400);
-  save("tt.queue",QUEUE);
-  if(QUEUE.length>=12)flushLog();
-}
-let flushing=false;
-async function flushLog(){
-  if(flushing||!QUEUE.length||!navigator.onLine||location.protocol==="file:")return;
-  flushing=true;const batch=QUEUE.slice(0,200);
-  try{
-    const r=await fetch("api/log",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({device:DEVICE,events:batch})});
-    if(r.ok){QUEUE.splice(0,batch.length);save("tt.queue",QUEUE)}
-  }catch(e){}
-  flushing=false;
-}
-window.addEventListener("online",flushLog);
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")flushLog()});
-setInterval(flushLog,45000);
-
-// ---------- Speech ----------
-// Recorded clips (ElevenLabs, voice "Jessica") keyed by line text; the iPad voice is the fallback for anything not recorded.
-const CLIPS={"elephant.":"elephant","find the elephant.":"find_the_elephant","what is this?":"what_is_this","dog.":"dog","find the dog.":"find_the_dog","cat.":"cat","find the cat.":"find_the_cat","horse.":"horse","find the horse.":"find_the_horse","monkey.":"monkey","find the monkey.":"find_the_monkey","fish.":"fish","find the fish.":"find_the_fish","bird.":"bird","find the bird.":"find_the_bird","lion.":"lion","find the lion.":"find_the_lion","cow.":"cow","find the cow.":"find_the_cow","apple.":"apple","find the apple.":"find_the_apple","banana.":"banana","find the banana.":"find_the_banana","pizza.":"pizza","find the pizza.":"find_the_pizza","rice.":"rice","find the rice.":"find_the_rice","bread.":"bread","find the bread.":"find_the_bread","egg.":"egg","find the egg.":"find_the_egg","ball.":"ball","find the ball.":"find_the_ball","car.":"car","find the car.":"find_the_car","bus.":"bus","find the bus.":"find_the_bus","book.":"book","find the book.":"find_the_book","bed.":"bed","find the bed.":"find_the_bed","shoe.":"shoe","find the shoe.":"find_the_shoe","hat.":"hat","find the hat.":"find_the_hat","house.":"house","find the house.":"find_the_house","cup.":"cup","find the cup.":"find_the_cup","doctor.":"doctor","she is a doctor.":"she_is_a_doctor","what is she?":"what_is_she","he is a doctor.":"he_is_a_doctor","what is he?":"what_is_he","chef.":"chef","he is a chef.":"he_is_a_chef","she is a chef.":"she_is_a_chef","pilot.":"pilot","he is a pilot.":"he_is_a_pilot","she is a pilot.":"she_is_a_pilot","firefighter.":"firefighter","she is a firefighter.":"she_is_a_firefighter","he is a firefighter.":"he_is_a_firefighter","police officer.":"police_officer","he is a police officer.":"he_is_a_police_officer","she is a police officer.":"she_is_a_police_officer","farmer.":"farmer","she is a farmer.":"she_is_a_farmer","he is a farmer.":"he_is_a_farmer","teacher.":"teacher","he is a teacher.":"he_is_a_teacher","she is a teacher.":"she_is_a_teacher","builder.":"builder","she is a builder.":"she_is_a_builder","he is a builder.":"he_is_a_builder","scientist.":"scientist","she is a scientist.":"she_is_a_scientist","he is a scientist.":"he_is_a_scientist","jump.":"jump","i can jump.":"i_can_jump","what can i do?":"what_can_i_do","run.":"run","i can run.":"i_can_run","swim.":"swim","i can swim.":"i_can_swim","sing.":"sing","i can sing.":"i_can_sing","climb.":"climb","i can climb.":"i_can_climb","kick.":"kick","i can kick.":"i_can_kick","sleep.":"sleep","i can sleep.":"i_can_sleep","read.":"read","i can read.":"i_can_read","dance.":"dance","i can dance.":"i_can_dance","cook.":"cook","i can cook.":"i_can_cook","paint.":"paint","i can paint.":"i_can_paint","ride.":"ride","i can ride.":"i_can_ride","write.":"write","i can write.":"i_can_write","drink.":"drink","i can drink.":"i_can_drink","eat.":"eat","i can eat.":"i_can_eat","wave.":"wave","i can wave.":"i_can_wave","feeding the elephant.":"feeding_the_elephant","i am feeding the elephant.":"i_am_feeding_the_elephant","what am i doing?":"what_am_i_doing","feeding the dog.":"feeding_the_dog","i am feeding the dog.":"i_am_feeding_the_dog","feeding the cat.":"feeding_the_cat","i am feeding the cat.":"i_am_feeding_the_cat","feeding the bird.":"feeding_the_bird","i am feeding the bird.":"i_am_feeding_the_bird","washing the car.":"washing_the_car","i am washing the car.":"i_am_washing_the_car","washing the dog.":"washing_the_dog","i am washing the dog.":"i_am_washing_the_dog","washing the dishes.":"washing_the_dishes","i am washing the dishes.":"i_am_washing_the_dishes","eating the apple.":"eating_the_apple","i am eating the apple.":"i_am_eating_the_apple","eating the pizza.":"eating_the_pizza","i am eating the pizza.":"i_am_eating_the_pizza","eating the banana.":"eating_the_banana","i am eating the banana.":"i_am_eating_the_banana","kicking the ball.":"kicking_the_ball","i am kicking the ball.":"i_am_kicking_the_ball","throwing the ball.":"throwing_the_ball","i am throwing the ball.":"i_am_throwing_the_ball","holding the ball.":"holding_the_ball","i am holding the ball.":"i_am_holding_the_ball","reading the book.":"reading_the_book","i am reading the book.":"i_am_reading_the_book","holding the cup.":"holding_the_cup","i am holding the cup.":"i_am_holding_the_cup","building a house.":"building_a_house","i am building a house.":"i_am_building_a_house","bird is flying.":"bird_is_flying","the bird is flying.":"the_bird_is_flying","what is happening?":"what_is_happening","bird is nesting.":"bird_is_nesting","the bird is nesting.":"the_bird_is_nesting","fish is swimming.":"fish_is_swimming","the fish is swimming.":"the_fish_is_swimming","dog is running.":"dog_is_running","the dog is running.":"the_dog_is_running","dog is sleeping.":"dog_is_sleeping","the dog is sleeping.":"the_dog_is_sleeping","cat is sleeping.":"cat_is_sleeping","the cat is sleeping.":"the_cat_is_sleeping","cat is jumping.":"cat_is_jumping","the cat is jumping.":"the_cat_is_jumping","boy is eating.":"boy_is_eating","the boy is eating.":"the_boy_is_eating","boy is reading.":"boy_is_reading","the boy is reading.":"the_boy_is_reading","girl is singing.":"girl_is_singing","the girl is singing.":"the_girl_is_singing","girl is painting.":"girl_is_painting","the girl is painting.":"the_girl_is_painting","baby is crying.":"baby_is_crying","the baby is crying.":"the_baby_is_crying","baby is laughing.":"baby_is_laughing","the baby is laughing.":"the_baby_is_laughing","man is cooking.":"man_is_cooking","the man is cooking.":"the_man_is_cooking","woman is driving.":"woman_is_driving","the woman is driving.":"the_woman_is_driving","big dog.":"big_dog","this is a big dog.":"this_is_a_big_dog","what do you see?":"what_do_you_see","small dog.":"small_dog","this is a small dog.":"this_is_a_small_dog","red apple.":"red_apple","this is a red apple.":"this_is_a_red_apple","green apple.":"green_apple","this is a green apple.":"this_is_a_green_apple","red car.":"red_car","this is a red car.":"this_is_a_red_car","blue car.":"blue_car","this is a blue car.":"this_is_a_blue_car","one ball.":"one_ball","i see one ball.":"i_see_one_ball","two balls.":"two_balls","i see two balls.":"i_see_two_balls","three fish.":"three_fish","i see three fish.":"i_see_three_fish","one fish.":"one_fish","i see one fish.":"i_see_one_fish","hot soup.":"hot_soup","the soup is hot.":"the_soup_is_hot","cold drink.":"cold_drink","the drink is cold.":"the_drink_is_cold","happy boy.":"happy_boy","the boy is happy.":"the_boy_is_happy","sad boy.":"sad_boy","the boy is sad.":"the_boy_is_sad","yellow hat.":"yellow_hat","this is a yellow hat.":"this_is_a_yellow_hat","black hat.":"black_hat","this is a black hat.":"this_is_a_black_hat","the boy.":"the_boy","the girl.":"the_girl","mum.":"mum","dad.":"dad","the baby.":"the_baby","the dog.":"the_dog","the cat.":"the_cat","the teacher.":"the_teacher","grandma.":"grandma","an apple.":"an_apple","a book.":"a_book","a ball.":"a_ball","the car.":"the_car","a cup.":"a_cup","a bone.":"a_bone","the ipad.":"the_ipad","a pencil.":"a_pencil","water.":"water","a toothbrush.":"a_toothbrush","in the kitchen.":"in_the_kitchen","in bed.":"in_bed","at the park.":"at_the_park","at school.":"at_school","on the road.":"on_the_road","at the pool.":"at_the_pool","on the sofa.":"on_the_sofa","in the garden.":"in_the_garden","in the bathroom.":"in_the_bathroom","in the car.":"in_the_car","in the morning.":"in_the_morning","in the afternoon.":"in_the_afternoon","at night.":"at_night","at bedtime.":"at_bedtime","feels happy.":"feels_happy","feels sad.":"feels_sad","feels tired.":"feels_tired","feels angry.":"feels_angry","feels scared.":"feels_scared","the boy is eating an apple in the kitchen in the morning.":"the_boy_is_eating_an_apple_in_the_kitche","what is the boy eating?":"what_is_the_boy_eating","who is eating?":"who_is_eating","where is the boy?":"where_is_the_boy","when is the boy eating?":"when_is_the_boy_eating","how does the boy feel?":"how_does_the_boy_feel","the girl is reading a book in bed at night.":"the_girl_is_reading_a_book_in_bed_at_nig","what is the girl reading?":"what_is_the_girl_reading","who is reading?":"who_is_reading","where is the girl?":"where_is_the_girl","when is the girl reading?":"when_is_the_girl_reading","how does the girl feel?":"how_does_the_girl_feel","the dog is chewing a bone in the garden in the afternoon.":"the_dog_is_chewing_a_bone_in_the_garden_","what is the dog chewing?":"what_is_the_dog_chewing","who is chewing?":"who_is_chewing","where is the dog?":"where_is_the_dog","when is the dog chewing?":"when_is_the_dog_chewing","how does the dog feel?":"how_does_the_dog_feel","mum is cooking rice in the kitchen in the afternoon.":"mum_is_cooking_rice_in_the_kitchen_in_th","what is mum cooking?":"what_is_mum_cooking","who is cooking?":"who_is_cooking","where is mum?":"where_is_mum","when is mum cooking?":"when_is_mum_cooking","how does mum feel?":"how_does_mum_feel","dad is driving the car on the road in the morning.":"dad_is_driving_the_car_on_the_road_in_th","what is dad driving?":"what_is_dad_driving","who is driving?":"who_is_driving","where is dad?":"where_is_dad","when is dad driving?":"when_is_dad_driving","how does dad feel?":"how_does_dad_feel","the baby is holding a cup in bed at night.":"the_baby_is_holding_a_cup_in_bed_at_nigh","what is the baby holding?":"what_is_the_baby_holding","who is holding?":"who_is_holding","where is the baby?":"where_is_the_baby","when is the baby holding?":"when_is_the_baby_holding","how does the baby feel?":"how_does_the_baby_feel","the teacher is holding a pencil at school in the morning.":"the_teacher_is_holding_a_pencil_at_schoo","what is the teacher holding?":"what_is_the_teacher_holding","where is the teacher?":"where_is_the_teacher","when is the teacher holding?":"when_is_the_teacher_holding","how does the teacher feel?":"how_does_the_teacher_feel","the boy is kicking a ball at the park in the afternoon.":"the_boy_is_kicking_a_ball_at_the_park_in","what is the boy kicking?":"what_is_the_boy_kicking","who is kicking?":"who_is_kicking","when is the boy kicking?":"when_is_the_boy_kicking","the girl is watching the ipad on the sofa at night.":"the_girl_is_watching_the_ipad_on_the_sof","what is the girl watching?":"what_is_the_girl_watching","who is watching?":"who_is_watching","when is the girl watching?":"when_is_the_girl_watching","the cat is holding a ball on the sofa in the afternoon.":"the_cat_is_holding_a_ball_on_the_sofa_in","what is the cat holding?":"what_is_the_cat_holding","where is the cat?":"where_is_the_cat","when is the cat holding?":"when_is_the_cat_holding","how does the cat feel?":"how_does_the_cat_feel","grandma is drinking water in the garden in the morning.":"grandma_is_drinking_water_in_the_garden_","what is grandma drinking?":"what_is_grandma_drinking","who is drinking?":"who_is_drinking","where is grandma?":"where_is_grandma","when is grandma drinking?":"when_is_grandma_drinking","how does grandma feel?":"how_does_grandma_feel","dad is holding a toothbrush in the bathroom at bedtime.":"dad_is_holding_a_toothbrush_in_the_bathr","what is dad holding?":"what_is_dad_holding","when is dad holding?":"when_is_dad_holding","the boy is eating bread in the car in the morning.":"the_boy_is_eating_bread_in_the_car_in_th","the girl is reading a book at school in the afternoon.":"the_girl_is_reading_a_book_at_school_in_","mum is driving the car on the road at night.":"mum_is_driving_the_car_on_the_road_at_ni","what is mum driving?":"what_is_mum_driving","when is mum driving?":"when_is_mum_driving","the baby is holding a ball at the park in the afternoon.":"the_baby_is_holding_a_ball_at_the_park_i","what?":"what","who?":"who","where?":"where","when?":"when","how?":"how","try again.":"try_again","your turn.":"your_turn","say it with me.":"say_it_with_me","level up!":"level_up","amazing! pop the bubbles!":"amazing_pop_the_bubbles","all done! great work today.":"all_done_great_work_today","something is missing. ask me.":"something_is_missing_ask_me","ask me.":"ask_me","pop!":"pop","yes!":"yes","that's it!":"that_s_it","good job!":"good_job","you got it!":"you_got_it","well done!":"well_done","tap the picture.":"tap_the_picture","listen.":"listen","yes, june!":"name_june_0","good job, june!":"name_june_1","well done, june!":"name_june_2","you got it, june!":"name_june_3","that's it, june!":"name_june_4","june, your turn.":"name_june_5","amazing, june! pop the bubbles!":"name_june_6","all done, june! great work today.":"name_june_7","hello june! let's play.":"name_june_8","try again, june.":"name_june_9"};
-const SPRITES={"jessica": {"elephant": [0.0, 1.0], "find_the_elephant": [1.35, 3.539], "what_is_this": [3.889, 4.869], "dog": [5.219, 6.151], "find_the_dog": [6.501, 8.297], "cat": [8.647, 9.407], "find_the_cat": [9.757, 11.459], "horse": [11.809, 12.678], "find_the_horse": [13.028, 14.897], "monkey": [15.247, 16.056], "find_the_monkey": [16.406, 17.97], "fish": [18.32, 19.154], "find_the_fish": [19.504, 21.151], "bird": [21.501, 22.223], "find_the_bird": [22.573, 24.24], "lion": [24.59, 25.477], "find_the_lion": [25.827, 27.511], "cow": [27.861, 28.643], "find_the_cow": [28.993, 30.564], "apple": [30.914, 31.7], "find_the_apple": [32.05, 33.62], "banana": [33.97, 34.802], "find_the_banana": [35.152, 36.826], "pizza": [37.176, 37.94], "find_the_pizza": [38.29, 39.885], "rice": [40.235, 41.021], "find_the_rice": [41.371, 42.941], "bread": [43.291, 43.965], "find_the_bread": [44.315, 45.862], "egg": [46.212, 46.919], "find_the_egg": [47.269, 48.595], "ball": [48.945, 49.699], "find_the_ball": [50.049, 51.611], "car": [51.961, 52.712], "find_the_car": [53.062, 54.501], "bus": [54.851, 55.608], "find_the_bus": [55.958, 57.432], "book": [57.782, 58.42], "find_the_book": [58.77, 60.164], "bed": [60.514, 61.161], "find_the_bed": [61.511, 62.88], "shoe": [63.23, 64.029], "find_the_shoe": [64.379, 65.795], "hat": [66.145, 66.85], "find_the_hat": [67.2, 68.587], "house": [68.937, 69.751], "find_the_house": [70.101, 71.598], "cup": [71.948, 72.62], "find_the_cup": [72.97, 74.283], "doctor": [74.633, 75.424], "she_is_a_doctor": [75.774, 77.158], "what_is_she": [77.508, 78.374], "he_is_a_doctor": [78.724, 80.096], "what_is_he": [80.446, 81.298], "chef": [81.648, 82.486], "he_is_a_chef": [82.836, 84.196], "she_is_a_chef": [84.546, 86.04], "pilot": [86.39, 87.206], "he_is_a_pilot": [87.556, 89.014], "she_is_a_pilot": [89.364, 90.76], "firefighter": [91.11, 92.265], "she_is_a_firefighter": [92.615, 94.49], "he_is_a_firefighter": [94.84, 96.53], "police_officer": [96.88, 98.127], "he_is_a_police_officer": [98.477, 100.295], "she_is_a_police_officer": [100.645, 102.618], "farmer": [102.968, 103.841], "she_is_a_farmer": [104.191, 105.689], "he_is_a_farmer": [106.039, 107.418], "teacher": [107.768, 108.574], "he_is_a_teacher": [108.924, 110.267], "she_is_a_teacher": [110.617, 111.971], "builder": [112.321, 113.125], "she_is_a_builder": [113.475, 114.866], "he_is_a_builder": [115.216, 116.59], "scientist": [116.94, 118.062], "she_is_a_scientist": [118.412, 120.149], "he_is_a_scientist": [120.499, 122.118], "jump": [122.468, 123.228], "i_can_jump": [123.578, 124.669], "what_can_i_do": [125.019, 126.206], "run": [126.556, 127.267], "i_can_run": [127.617, 128.696], "swim": [129.046, 129.937], "i_can_swim": [130.287, 131.519], "sing": [131.869, 132.72], "i_can_sing": [133.07, 134.322], "climb": [134.672, 135.452], "i_can_climb": [135.802, 137.033], "kick": [137.383, 138.056], "i_can_kick": [138.406, 139.415], "sleep": [139.765, 140.701], "i_can_sleep": [141.051, 142.379], "read": [142.729, 143.554], "i_can_read": [143.904, 144.989], "dance": [145.339, 146.286], "i_can_dance": [146.636, 147.956], "cook": [148.306, 148.971], "i_can_cook": [149.321, 150.461], "paint": [150.811, 151.571], "i_can_paint": [151.921, 153.057], "ride": [153.407, 154.226], "i_can_ride": [154.576, 155.711], "write": [156.061, 156.85], "i_can_write": [157.2, 158.504], "drink": [158.854, 159.571], "i_can_drink": [159.921, 161.021], "eat": [161.371, 162.081], "i_can_eat": [162.431, 163.614], "wave": [163.964, 164.802], "i_can_wave": [165.152, 166.299], "feeding_the_elephant": [166.649, 168.193], "i_am_feeding_the_elephant": [168.543, 170.888], "what_am_i_doing": [171.238, 172.258], "feeding_the_dog": [172.608, 173.845], "i_am_feeding_the_dog": [174.195, 176.207], "feeding_the_cat": [176.557, 177.816], "i_am_feeding_the_cat": [178.166, 180.022], "feeding_the_bird": [180.372, 181.611], "i_am_feeding_the_bird": [181.961, 183.69], "washing_the_car": [184.04, 185.375], "i_am_washing_the_car": [185.725, 187.78], "washing_the_dog": [188.13, 189.443], "i_am_washing_the_dog": [189.793, 191.943], "washing_the_dishes": [192.293, 193.816], "i_am_washing_the_dishes": [194.166, 196.488], "eating_the_apple": [196.838, 198.039], "i_am_eating_the_apple": [198.389, 200.469], "eating_the_pizza": [200.819, 202.031], "i_am_eating_the_pizza": [202.381, 204.565], "eating_the_banana": [204.915, 206.198], "i_am_eating_the_banana": [206.548, 208.713], "kicking_the_ball": [209.063, 210.226], "i_am_kicking_the_ball": [210.576, 212.491], "throwing_the_ball": [212.841, 214.17], "i_am_throwing_the_ball": [214.52, 216.582], "holding_the_ball": [216.932, 218.12], "i_am_holding_the_ball": [218.47, 220.512], "reading_the_book": [220.862, 222.094], "i_am_reading_the_book": [222.444, 224.374], "holding_the_cup": [224.724, 225.899], "i_am_holding_the_cup": [226.249, 228.309], "building_a_house": [228.659, 229.947], "i_am_building_a_house": [230.297, 232.432], "bird_is_flying": [232.782, 234.37], "the_bird_is_flying": [234.72, 236.636], "what_is_happening": [236.986, 238.265], "bird_is_nesting": [238.615, 240.289], "the_bird_is_nesting": [240.639, 242.506], "fish_is_swimming": [242.856, 244.371], "the_fish_is_swimming": [244.721, 246.452], "dog_is_running": [246.802, 248.444], "the_dog_is_running": [248.794, 250.404], "dog_is_sleeping": [250.754, 252.547], "the_dog_is_sleeping": [252.897, 254.63], "cat_is_sleeping": [254.98, 256.721], "the_cat_is_sleeping": [257.071, 258.814], "cat_is_jumping": [259.164, 260.851], "the_cat_is_jumping": [261.201, 262.835], "boy_is_eating": [263.185, 264.684], "the_boy_is_eating": [265.034, 266.674], "boy_is_reading": [267.024, 268.594], "the_boy_is_reading": [268.944, 270.603], "girl_is_singing": [270.953, 272.418], "the_girl_is_singing": [272.768, 274.325], "girl_is_painting": [274.675, 276.136], "the_girl_is_painting": [276.486, 278.18], "baby_is_crying": [278.53, 280.23], "the_baby_is_crying": [280.58, 282.221], "baby_is_laughing": [282.571, 284.121], "the_baby_is_laughing": [284.471, 286.181], "man_is_cooking": [286.531, 288.009], "the_man_is_cooking": [288.359, 289.986], "woman_is_driving": [290.336, 291.899], "the_woman_is_driving": [292.249, 293.98], "big_dog": [294.33, 296.033], "this_is_a_big_dog": [296.383, 298.563], "what_do_you_see": [298.913, 299.86], "small_dog": [300.21, 301.437], "this_is_a_small_dog": [301.787, 303.678], "red_apple": [304.028, 304.991], "this_is_a_red_apple": [305.341, 307.093], "green_apple": [307.443, 308.611], "this_is_a_green_apple": [308.961, 311.032], "red_car": [311.382, 312.346], "this_is_a_red_car": [312.696, 314.527], "blue_car": [314.877, 315.924], "this_is_a_blue_car": [316.274, 318.161], "one_ball": [318.511, 319.501], "i_see_one_ball": [319.851, 321.409], "two_balls": [321.759, 322.725], "i_see_two_balls": [323.075, 324.746], "three_fish": [325.096, 326.16], "i_see_three_fish": [326.51, 328.324], "one_fish": [328.674, 329.708], "i_see_one_fish": [330.058, 331.703], "hot_soup": [332.053, 333.139], "the_soup_is_hot": [333.489, 334.861], "cold_drink": [335.211, 336.153], "the_drink_is_cold": [336.503, 338.017], "happy_boy": [338.367, 339.472], "the_boy_is_happy": [339.822, 341.205], "sad_boy": [341.555, 342.763], "the_boy_is_sad": [343.113, 344.648], "yellow_hat": [344.998, 346.066], "this_is_a_yellow_hat": [346.416, 348.143], "black_hat": [348.493, 349.489], "this_is_a_black_hat": [349.839, 351.604], "the_boy": [351.954, 352.868], "the_girl": [353.218, 354.102], "mum": [354.452, 355.093], "dad": [355.443, 356.147], "the_baby": [356.497, 357.379], "the_dog": [357.729, 358.579], "the_cat": [358.929, 359.711], "the_teacher": [360.061, 360.956], "grandma": [361.306, 362.17], "an_apple": [362.52, 363.354], "a_book": [363.704, 364.411], "a_ball": [364.761, 365.555], "the_car": [365.905, 366.702], "a_cup": [367.052, 367.742], "a_bone": [368.092, 369.04], "the_ipad": [369.39, 370.421], "a_pencil": [370.771, 371.625], "water": [371.975, 372.68], "a_toothbrush": [373.03, 374.074], "in_the_kitchen": [374.424, 375.317], "in_bed": [375.667, 376.448], "at_the_park": [376.798, 377.715], "at_school": [378.065, 378.964], "on_the_road": [379.314, 380.32], "at_the_pool": [380.67, 381.641], "on_the_sofa": [381.991, 383.042], "in_the_garden": [383.392, 384.395], "in_the_bathroom": [384.745, 385.778], "in_the_car": [386.128, 387.021], "in_the_morning": [387.371, 388.345], "in_the_afternoon": [388.695, 389.885], "at_night": [390.235, 390.905], "at_bedtime": [391.255, 392.299], "feels_happy": [392.649, 393.816], "feels_sad": [394.166, 395.82], "feels_tired": [396.17, 397.478], "feels_angry": [397.828, 399.208], "feels_scared": [399.558, 401.218], "the_boy_is_eating_an_apple_in_the_kitche": [401.568, 404.731], "what_is_the_boy_eating": [405.081, 406.577], "who_is_eating": [406.927, 408.133], "where_is_the_boy": [408.483, 409.811], "when_is_the_boy_eating": [410.161, 411.986], "how_does_the_boy_feel": [412.336, 413.872], "the_girl_is_reading_a_book_in_bed_at_nig": [414.222, 416.885], "what_is_the_girl_reading": [417.235, 418.735], "who_is_reading": [419.085, 420.434], "where_is_the_girl": [420.784, 421.974], "when_is_the_girl_reading": [422.324, 424.064], "how_does_the_girl_feel": [424.414, 425.948], "the_dog_is_chewing_a_bone_in_the_garden_": [426.298, 429.662], "what_is_the_dog_chewing": [430.012, 431.446], "who_is_chewing": [431.796, 433.111], "where_is_the_dog": [433.461, 434.665], "when_is_the_dog_chewing": [435.015, 436.647], "how_does_the_dog_feel": [436.997, 438.5], "mum_is_cooking_rice_in_the_kitchen_in_th": [438.85, 441.673], "what_is_mum_cooking": [442.023, 443.353], "who_is_cooking": [443.703, 445.009], "where_is_mum": [445.359, 446.409], "when_is_mum_cooking": [446.759, 448.387], "how_does_mum_feel": [448.737, 449.928], "dad_is_driving_the_car_on_the_road_in_th": [450.278, 453.188], "what_is_dad_driving": [453.538, 455.061], "who_is_driving": [455.411, 456.713], "where_is_dad": [457.063, 458.562], "when_is_dad_driving": [458.912, 460.508], "how_does_dad_feel": [460.858, 462.351], "the_baby_is_holding_a_cup_in_bed_at_nigh": [462.701, 465.258], "what_is_the_baby_holding": [465.608, 467.139], "who_is_holding": [467.489, 468.882], "where_is_the_baby": [469.232, 470.66], "when_is_the_baby_holding": [471.01, 472.637], "how_does_the_baby_feel": [472.987, 474.605], "the_teacher_is_holding_a_pencil_at_schoo": [474.955, 477.883], "what_is_the_teacher_holding": [478.233, 479.756], "where_is_the_teacher": [480.106, 481.507], "when_is_the_teacher_holding": [481.857, 483.644], "how_does_the_teacher_feel": [483.994, 485.556], "the_boy_is_kicking_a_ball_at_the_park_in": [485.906, 489.129], "what_is_the_boy_kicking": [489.479, 490.932], "who_is_kicking": [491.282, 492.555], "when_is_the_boy_kicking": [492.905, 494.639], "the_girl_is_watching_the_ipad_on_the_sof": [494.989, 498.101], "what_is_the_girl_watching": [498.451, 500.028], "who_is_watching": [500.378, 501.781], "when_is_the_girl_watching": [502.131, 503.899], "the_cat_is_holding_a_ball_on_the_sofa_in": [504.249, 507.52], "what_is_the_cat_holding": [507.87, 509.318], "where_is_the_cat": [509.668, 511.085], "when_is_the_cat_holding": [511.435, 513.161], "how_does_the_cat_feel": [513.511, 514.955], "grandma_is_drinking_water_in_the_garden_": [515.305, 518.159], "what_is_grandma_drinking": [518.509, 520.021], "who_is_drinking": [520.371, 521.905], "where_is_grandma": [522.255, 523.696], "when_is_grandma_drinking": [524.046, 525.877], "how_does_grandma_feel": [526.227, 527.672], "dad_is_holding_a_toothbrush_in_the_bathr": [528.022, 530.991], "what_is_dad_holding": [531.341, 532.548], "when_is_dad_holding": [532.898, 534.62], "the_boy_is_eating_bread_in_the_car_in_th": [534.97, 537.644], "the_girl_is_reading_a_book_at_school_in_": [537.994, 540.818], "mum_is_driving_the_car_on_the_road_at_ni": [541.168, 543.821], "what_is_mum_driving": [544.171, 545.991], "when_is_mum_driving": [546.341, 548.052], "the_baby_is_holding_a_ball_at_the_park_i": [548.402, 551.295], "what": [551.645, 552.251], "who": [552.601, 553.194], "where": [553.544, 554.229], "when": [554.579, 555.268], "how": [555.618, 556.283], "try_again": [556.633, 557.553], "your_turn": [557.903, 558.722], "say_it_with_me": [559.072, 560.189], "level_up": [560.539, 561.522], "amazing_pop_the_bubbles": [561.872, 564.422], "all_done_great_work_today": [564.772, 567.523], "something_is_missing_ask_me": [567.873, 570.75], "ask_me": [571.1, 572.008], "pop": [572.358, 572.976], "yes": [573.326, 574.496], "that_s_it": [574.846, 575.978], "good_job": [576.328, 577.501], "you_got_it": [577.851, 578.883], "well_done": [579.233, 580.159], "tap_the_picture": [580.509, 581.597], "listen": [581.947, 582.714], "name_oba_0": [583.064, 584.504], "name_oba_1": [584.854, 586.594], "name_oba_2": [586.944, 588.504], "name_oba_3": [588.854, 590.215], "name_oba_4": [590.565, 591.835], "name_oba_5": [592.185, 593.806], "name_oba_6": [594.156, 597.058], "name_oba_7": [597.408, 600.108], "name_oba_8": [600.458, 602.598], "name_oba_9": [602.948, 604.468], "name_june_0": [604.818, 606.458], "name_june_1": [606.808, 608.308], "name_june_2": [608.658, 610.149], "name_june_3": [610.499, 611.829], "name_june_4": [612.179, 613.439], "name_june_5": [613.789, 615.319], "name_june_6": [615.669, 618.199], "name_june_7": [618.549, 621.099], "name_june_8": [621.449, 623.589], "name_june_9": [623.939, 625.169]}, "dad": {"elephant": [0.0, 0.95], "find_the_elephant": [1.3, 3.2], "what_is_this": [3.55, 5.041], "dog": [5.391, 6.351], "find_the_dog": [6.701, 8.521], "cat": [8.871, 9.701], "find_the_cat": [10.051, 11.791], "horse": [12.141, 12.981], "find_the_horse": [13.331, 15.151], "monkey": [15.501, 16.351], "find_the_monkey": [16.701, 18.391], "fish": [18.741, 19.541], "find_the_fish": [19.891, 21.581], "bird": [21.931, 22.781], "find_the_bird": [23.131, 24.731], "lion": [25.081, 25.972], "find_the_lion": [26.322, 28.052], "cow": [28.402, 29.182], "find_the_cow": [29.532, 31.222], "apple": [31.572, 32.342], "find_the_apple": [32.692, 34.232], "banana": [34.582, 35.332], "find_the_banana": [35.682, 37.262], "pizza": [37.612, 38.462], "find_the_pizza": [38.812, 40.582], "rice": [40.932, 41.792], "find_the_rice": [42.142, 43.882], "bread": [44.232, 45.052], "find_the_bread": [45.402, 47.042], "egg": [47.392, 48.232], "find_the_egg": [48.582, 49.932], "ball": [50.282, 50.963], "find_the_ball": [51.313, 52.593], "car": [52.943, 53.843], "find_the_car": [54.193, 55.563], "bus": [55.913, 56.633], "find_the_bus": [56.983, 58.443], "book": [58.793, 59.633], "find_the_book": [59.983, 61.433], "bed": [61.783, 62.633], "find_the_bed": [62.983, 64.313], "shoe": [64.663, 65.643], "find_the_shoe": [65.993, 67.253], "hat": [67.603, 68.403], "find_the_hat": [68.753, 70.153], "house": [70.503, 71.453], "find_the_house": [71.803, 73.283], "cup": [73.633, 74.073], "find_the_cup": [74.423, 75.813], "doctor": [76.163, 77.083], "she_is_a_doctor": [77.433, 78.883], "what_is_she": [79.233, 80.223], "he_is_a_doctor": [80.573, 81.923], "what_is_he": [82.273, 83.253], "chef": [83.603, 84.243], "he_is_a_chef": [84.593, 85.873], "she_is_a_chef": [86.223, 87.393], "pilot": [87.743, 88.673], "he_is_a_pilot": [89.023, 90.433], "she_is_a_pilot": [90.783, 92.003], "firefighter": [92.353, 93.543], "she_is_a_firefighter": [93.893, 95.724], "he_is_a_firefighter": [96.074, 97.844], "police_officer": [98.194, 99.524], "he_is_a_police_officer": [99.874, 101.844], "she_is_a_police_officer": [102.194, 104.214], "farmer": [104.564, 105.444], "she_is_a_farmer": [105.794, 107.204], "he_is_a_farmer": [107.554, 108.894], "teacher": [109.244, 110.104], "he_is_a_teacher": [110.454, 111.764], "she_is_a_teacher": [112.114, 113.534], "builder": [113.884, 114.734], "she_is_a_builder": [115.084, 116.464], "he_is_a_builder": [116.814, 118.084], "scientist": [118.434, 119.624], "she_is_a_scientist": [119.974, 121.654], "he_is_a_scientist": [122.004, 123.584], "jump": [123.934, 124.694], "i_can_jump": [125.044, 126.044], "what_can_i_do": [126.394, 127.474], "run": [127.824, 128.464], "i_can_run": [128.814, 129.835], "swim": [130.185, 131.125], "i_can_swim": [131.475, 132.635], "sing": [132.985, 133.875], "i_can_sing": [134.225, 135.505], "climb": [135.855, 136.746], "i_can_climb": [137.096, 138.366], "kick": [138.716, 139.516], "i_can_kick": [139.866, 141.026], "sleep": [141.376, 142.486], "i_can_sleep": [142.836, 144.086], "read": [144.436, 145.556], "i_can_read": [145.906, 147.106], "dance": [147.456, 148.446], "i_can_dance": [148.796, 150.186], "cook": [150.536, 151.466], "i_can_cook": [151.816, 152.967], "paint": [153.317, 154.217], "i_can_paint": [154.567, 155.817], "ride": [156.167, 157.267], "i_can_ride": [157.617, 158.827], "write": [159.177, 160.167], "i_can_write": [160.517, 161.617], "drink": [161.967, 162.787], "i_can_drink": [163.137, 164.367], "eat": [164.717, 165.597], "i_can_eat": [165.947, 167.127], "wave": [167.477, 168.447], "i_can_wave": [168.797, 170.077], "feeding_the_elephant": [170.427, 172.157], "i_am_feeding_the_elephant": [172.507, 174.407], "what_am_i_doing": [174.757, 175.988], "feeding_the_dog": [176.338, 177.788], "i_am_feeding_the_dog": [178.138, 179.848], "feeding_the_cat": [180.198, 181.728], "i_am_feeding_the_cat": [182.078, 183.668], "feeding_the_bird": [184.018, 185.538], "i_am_feeding_the_bird": [185.888, 187.338], "washing_the_car": [187.688, 189.179], "i_am_washing_the_car": [189.529, 192.039], "washing_the_dog": [192.389, 193.839], "i_am_washing_the_dog": [194.189, 196.649], "washing_the_dishes": [196.999, 198.739], "i_am_washing_the_dishes": [199.089, 201.749], "eating_the_apple": [202.099, 203.429], "i_am_eating_the_apple": [203.779, 206.069], "eating_the_pizza": [206.419, 207.91], "i_am_eating_the_pizza": [208.26, 210.71], "eating_the_banana": [211.06, 212.53], "i_am_eating_the_banana": [212.88, 215.05], "kicking_the_ball": [215.4, 216.891], "i_am_kicking_the_ball": [217.241, 219.412], "throwing_the_ball": [219.762, 221.202], "i_am_throwing_the_ball": [221.552, 223.752], "holding_the_ball": [224.102, 225.582], "i_am_holding_the_ball": [225.932, 228.212], "reading_the_book": [228.562, 229.962], "i_am_reading_the_book": [230.312, 232.622], "holding_the_cup": [232.972, 234.422], "i_am_holding_the_cup": [234.772, 236.952], "building_a_house": [237.302, 238.802], "i_am_building_a_house": [239.152, 241.472], "bird_is_flying": [241.822, 243.492], "the_bird_is_flying": [243.842, 245.702], "what_is_happening": [246.052, 247.362], "bird_is_nesting": [247.712, 249.532], "the_bird_is_nesting": [249.882, 251.892], "fish_is_swimming": [252.242, 254.032], "the_fish_is_swimming": [254.382, 256.052], "dog_is_running": [256.402, 257.942], "the_dog_is_running": [258.292, 260.222], "dog_is_sleeping": [260.572, 262.352], "the_dog_is_sleeping": [262.702, 264.652], "cat_is_sleeping": [265.002, 266.792], "the_cat_is_sleeping": [267.142, 269.032], "cat_is_jumping": [269.382, 271.062], "the_cat_is_jumping": [271.412, 273.252], "boy_is_eating": [273.602, 275.102], "the_boy_is_eating": [275.452, 277.152], "boy_is_reading": [277.502, 279.102], "the_boy_is_reading": [279.452, 281.172], "girl_is_singing": [281.522, 283.202], "the_girl_is_singing": [283.552, 285.252], "girl_is_painting": [285.602, 287.152], "the_girl_is_painting": [287.502, 289.302], "baby_is_crying": [289.652, 291.432], "the_baby_is_crying": [291.782, 293.582], "baby_is_laughing": [293.932, 295.702], "the_baby_is_laughing": [296.052, 297.912], "man_is_cooking": [298.262, 299.822], "the_man_is_cooking": [300.172, 301.842], "woman_is_driving": [302.192, 303.882], "the_woman_is_driving": [304.232, 306.122], "big_dog": [306.472, 307.522], "this_is_a_big_dog": [307.872, 309.782], "what_do_you_see": [310.132, 311.272], "small_dog": [311.622, 312.832], "this_is_a_small_dog": [313.182, 315.292], "red_apple": [315.642, 316.752], "this_is_a_red_apple": [317.102, 319.112], "green_apple": [319.462, 320.802], "this_is_a_green_apple": [321.152, 323.342], "red_car": [323.692, 325.142], "this_is_a_red_car": [325.492, 327.652], "blue_car": [328.002, 329.172], "this_is_a_blue_car": [329.522, 331.362], "one_ball": [331.712, 332.852], "i_see_one_ball": [333.202, 334.602], "two_balls": [334.952, 336.192], "i_see_two_balls": [336.542, 338.282], "three_fish": [338.632, 339.993], "i_see_three_fish": [340.343, 342.113], "one_fish": [342.463, 343.703], "i_see_one_fish": [344.053, 345.683], "hot_soup": [346.033, 346.993], "the_soup_is_hot": [347.343, 349.083], "cold_drink": [349.433, 350.553], "the_drink_is_cold": [350.903, 352.513], "happy_boy": [352.863, 353.993], "the_boy_is_happy": [354.343, 355.943], "sad_boy": [356.293, 357.533], "the_boy_is_sad": [357.883, 359.543], "yellow_hat": [359.893, 361.073], "this_is_a_yellow_hat": [361.423, 363.343], "black_hat": [363.693, 364.773], "this_is_a_black_hat": [365.123, 366.983], "the_boy": [367.333, 368.313], "the_girl": [368.663, 369.753], "mum": [370.103, 370.873], "dad": [371.223, 371.843], "the_baby": [372.193, 374.063], "the_dog": [374.413, 375.503], "the_cat": [375.853, 376.893], "the_teacher": [377.243, 378.383], "grandma": [378.733, 379.683], "an_apple": [380.033, 381.185], "a_book": [381.535, 382.505], "a_ball": [382.855, 383.795], "the_car": [384.145, 385.175], "a_cup": [385.525, 386.125], "a_bone": [386.475, 388.436], "the_ipad": [388.786, 389.986], "a_pencil": [390.336, 391.426], "water": [391.776, 392.656], "a_toothbrush": [393.006, 394.246], "in_the_kitchen": [394.596, 395.748], "in_bed": [396.098, 397.118], "at_the_park": [397.468, 398.62], "at_school": [398.97, 400.07], "on_the_road": [400.42, 401.5], "at_the_pool": [401.85, 403.001], "on_the_sofa": [403.351, 404.522], "in_the_garden": [404.872, 406.072], "in_the_bathroom": [406.422, 407.752], "in_the_car": [408.102, 409.202], "in_the_morning": [409.552, 410.652], "in_the_afternoon": [411.002, 412.452], "at_night": [412.802, 413.582], "at_bedtime": [413.932, 415.032], "feels_happy": [415.382, 416.762], "feels_sad": [417.112, 418.742], "feels_tired": [419.092, 420.762], "feels_angry": [421.112, 422.592], "feels_scared": [422.942, 424.572], "the_boy_is_eating_an_apple_in_the_kitche": [424.922, 428.482], "what_is_the_boy_eating": [428.832, 430.392], "who_is_eating": [430.742, 432.222], "where_is_the_boy": [432.572, 434.042], "when_is_the_boy_eating": [434.392, 436.552], "how_does_the_boy_feel": [436.902, 438.962], "the_girl_is_reading_a_book_in_bed_at_nig": [439.312, 442.232], "what_is_the_girl_reading": [442.582, 444.172], "who_is_reading": [444.522, 446.052], "where_is_the_girl": [446.402, 447.992], "when_is_the_girl_reading": [448.342, 450.152], "how_does_the_girl_feel": [450.502, 452.382], "the_dog_is_chewing_a_bone_in_the_garden_": [452.732, 456.562], "what_is_the_dog_chewing": [456.912, 458.533], "who_is_chewing": [458.883, 460.254], "where_is_the_dog": [460.604, 461.894], "when_is_the_dog_chewing": [462.244, 464.234], "how_does_the_dog_feel": [464.584, 466.384], "mum_is_cooking_rice_in_the_kitchen_in_th": [466.734, 470.224], "what_is_mum_cooking": [470.574, 472.144], "who_is_cooking": [472.494, 473.964], "where_is_mum": [474.314, 475.514], "when_is_mum_cooking": [475.864, 477.794], "how_does_mum_feel": [478.144, 479.494], "dad_is_driving_the_car_on_the_road_in_th": [479.844, 483.714], "what_is_dad_driving": [484.064, 485.934], "who_is_driving": [486.284, 487.884], "where_is_dad": [488.234, 489.624], "when_is_dad_driving": [489.974, 492.184], "how_does_dad_feel": [492.534, 494.474], "the_baby_is_holding_a_cup_in_bed_at_nigh": [494.824, 498.104], "what_is_the_baby_holding": [498.454, 500.274], "who_is_holding": [500.624, 502.194], "where_is_the_baby": [502.544, 504.234], "when_is_the_baby_holding": [504.584, 506.594], "how_does_the_baby_feel": [506.944, 508.794], "the_teacher_is_holding_a_pencil_at_schoo": [509.144, 512.664], "what_is_the_teacher_holding": [513.014, 514.934], "where_is_the_teacher": [515.284, 516.834], "when_is_the_teacher_holding": [517.184, 519.334], "how_does_the_teacher_feel": [519.684, 521.704], "the_boy_is_kicking_a_ball_at_the_park_in": [522.054, 525.644], "what_is_the_boy_kicking": [525.994, 527.914], "who_is_kicking": [528.264, 529.824], "when_is_the_boy_kicking": [530.174, 532.174], "the_girl_is_watching_the_ipad_on_the_sof": [532.524, 536.074], "what_is_the_girl_watching": [536.424, 538.274], "who_is_watching": [538.624, 540.194], "when_is_the_girl_watching": [540.544, 542.414], "the_cat_is_holding_a_ball_on_the_sofa_in": [542.764, 546.574], "what_is_the_cat_holding": [546.924, 548.694], "where_is_the_cat": [549.044, 550.554], "when_is_the_cat_holding": [550.904, 552.684], "how_does_the_cat_feel": [553.034, 554.644], "grandma_is_drinking_water_in_the_garden_": [554.994, 558.954], "what_is_grandma_drinking": [559.304, 561.324], "who_is_drinking": [561.674, 563.254], "where_is_grandma": [563.604, 565.074], "when_is_grandma_drinking": [565.424, 567.604], "how_does_grandma_feel": [567.954, 569.924], "dad_is_holding_a_toothbrush_in_the_bathr": [570.274, 574.094], "what_is_dad_holding": [574.444, 576.044], "when_is_dad_holding": [576.394, 578.054], "the_boy_is_eating_bread_in_the_car_in_th": [578.404, 581.564], "the_girl_is_reading_a_book_at_school_in_": [581.914, 585.344], "mum_is_driving_the_car_on_the_road_at_ni": [585.694, 588.944], "what_is_mum_driving": [589.294, 590.994], "when_is_mum_driving": [591.344, 593.064], "the_baby_is_holding_a_ball_at_the_park_i": [593.414, 596.964], "what": [597.314, 598.024], "who": [598.374, 599.174], "where": [599.524, 600.424], "when": [600.774, 601.604], "how": [601.954, 602.744], "try_again": [603.094, 604.214], "your_turn": [604.564, 605.524], "say_it_with_me": [605.874, 607.004], "level_up": [607.354, 608.324], "amazing_pop_the_bubbles": [608.674, 611.074], "all_done_great_work_today": [611.424, 613.994], "something_is_missing_ask_me": [614.344, 616.874], "ask_me": [617.224, 618.284], "pop": [618.634, 619.344], "yes": [619.694, 620.506], "that_s_it": [620.856, 621.686], "good_job": [622.036, 623.166], "you_got_it": [623.516, 624.346], "well_done": [624.696, 625.876], "tap_the_picture": [626.226, 627.826], "listen": [628.176, 629.026], "name_oba_0": [629.376, 630.686], "name_oba_1": [631.036, 632.436], "name_oba_2": [632.786, 634.408], "name_oba_3": [634.758, 636.278], "name_oba_4": [636.628, 638.038], "name_oba_5": [638.388, 640.068], "name_oba_6": [640.418, 643.258], "name_oba_7": [643.608, 646.658], "name_oba_8": [647.008, 649.138], "name_oba_9": [649.488, 651.148], "name_june_0": [651.498, 652.688], "name_june_1": [653.038, 654.478], "name_june_2": [654.828, 656.238], "name_june_3": [656.588, 658.018], "name_june_4": [658.368, 659.888], "name_june_5": [660.238, 661.928], "name_june_6": [662.278, 665.028], "name_june_7": [665.378, 668.078], "name_june_8": [668.428, 670.528], "name_june_9": [670.878, 672.358]}, "mum": {"elephant": [0.0, 1.095], "find_the_elephant": [1.445, 3.357], "what_is_this": [3.707, 4.898], "dog": [5.248, 6.219], "find_the_dog": [6.569, 8.14], "cat": [8.49, 9.349], "find_the_cat": [9.699, 11.168], "horse": [11.518, 12.494], "find_the_horse": [12.844, 14.5], "monkey": [14.85, 15.886], "find_the_monkey": [16.236, 17.809], "fish": [18.159, 19.054], "find_the_fish": [19.404, 20.869], "bird": [21.219, 22.235], "find_the_bird": [22.585, 24.095], "lion": [24.445, 25.527], "find_the_lion": [25.877, 27.518], "cow": [27.868, 28.817], "find_the_cow": [29.167, 30.653], "apple": [31.003, 31.974], "find_the_apple": [32.324, 33.89], "banana": [34.24, 35.378], "find_the_banana": [35.728, 37.35], "pizza": [37.7, 38.669], "find_the_pizza": [39.019, 40.552], "rice": [40.902, 41.928], "find_the_rice": [42.278, 43.848], "bread": [44.198, 45.166], "find_the_bread": [45.516, 47.037], "egg": [47.387, 48.162], "find_the_egg": [48.512, 49.934], "ball": [50.284, 51.316], "find_the_ball": [51.666, 53.215], "car": [53.565, 54.548], "find_the_car": [54.898, 56.505], "bus": [56.855, 57.887], "find_the_bus": [58.237, 59.873], "book": [60.223, 61.114], "find_the_book": [61.464, 63.072], "bed": [63.422, 64.414], "find_the_bed": [64.764, 66.404], "shoe": [66.754, 67.775], "find_the_shoe": [68.125, 69.839], "hat": [70.189, 71.225], "find_the_hat": [71.575, 73.288], "house": [73.638, 74.668], "find_the_house": [75.018, 76.726], "cup": [77.076, 77.855], "find_the_cup": [78.205, 79.675], "doctor": [80.025, 81.162], "she_is_a_doctor": [81.512, 83.188], "what_is_she": [83.538, 84.956], "he_is_a_doctor": [85.306, 86.98], "what_is_he": [87.33, 88.837], "chef": [89.187, 90.184], "he_is_a_chef": [90.534, 92.104], "she_is_a_chef": [92.454, 94.076], "pilot": [94.426, 95.453], "he_is_a_pilot": [95.803, 97.412], "she_is_a_pilot": [97.762, 99.32], "firefighter": [99.67, 101.0], "she_is_a_firefighter": [101.35, 103.696], "he_is_a_firefighter": [104.046, 106.301], "police_officer": [106.651, 108.276], "he_is_a_police_officer": [108.626, 111.086], "she_is_a_police_officer": [111.436, 113.932], "farmer": [114.282, 115.343], "she_is_a_farmer": [115.693, 117.571], "he_is_a_farmer": [117.921, 119.732], "teacher": [120.082, 121.028], "he_is_a_teacher": [121.378, 123.079], "she_is_a_teacher": [123.429, 125.28], "builder": [125.63, 126.748], "she_is_a_builder": [127.098, 128.928], "he_is_a_builder": [129.278, 131.062], "scientist": [131.412, 132.677], "she_is_a_scientist": [133.027, 135.086], "he_is_a_scientist": [135.436, 137.418], "jump": [137.768, 138.661], "i_can_jump": [139.011, 140.421], "what_can_i_do": [140.771, 142.221], "run": [142.571, 143.414], "i_can_run": [143.764, 145.043], "swim": [145.393, 146.378], "i_can_swim": [146.728, 148.129], "sing": [148.479, 149.434], "i_can_sing": [149.784, 151.214], "climb": [151.564, 152.432], "i_can_climb": [152.782, 154.217], "kick": [154.567, 155.322], "i_can_kick": [155.672, 156.861], "sleep": [157.211, 158.81], "i_can_sleep": [159.16, 160.528], "read": [160.878, 161.731], "i_can_read": [162.081, 163.262], "dance": [163.612, 164.699], "i_can_dance": [165.049, 166.468], "cook": [166.818, 167.646], "i_can_cook": [167.996, 169.233], "paint": [169.583, 170.556], "i_can_paint": [170.906, 172.313], "ride": [172.663, 173.627], "i_can_ride": [173.977, 175.252], "write": [175.602, 176.559], "i_can_write": [176.909, 178.211], "drink": [178.561, 179.943], "i_can_drink": [180.293, 181.669], "eat": [182.019, 182.912], "i_can_eat": [183.262, 184.592], "wave": [184.942, 185.96], "i_can_wave": [186.31, 187.68], "feeding_the_elephant": [188.03, 189.775], "i_am_feeding_the_elephant": [190.125, 192.213], "what_am_i_doing": [192.563, 193.9], "feeding_the_dog": [194.25, 195.898], "i_am_feeding_the_dog": [196.248, 198.245], "feeding_the_cat": [198.595, 200.074], "i_am_feeding_the_cat": [200.424, 202.419], "feeding_the_bird": [202.769, 204.433], "i_am_feeding_the_bird": [204.783, 206.58], "washing_the_car": [206.93, 208.366], "i_am_washing_the_car": [208.716, 211.062], "washing_the_dog": [211.412, 212.979], "i_am_washing_the_dog": [213.329, 216.117], "washing_the_dishes": [216.467, 218.707], "i_am_washing_the_dishes": [219.057, 221.912], "eating_the_apple": [222.262, 223.685], "i_am_eating_the_apple": [224.035, 226.292], "eating_the_pizza": [226.642, 228.031], "i_am_eating_the_pizza": [228.381, 230.675], "eating_the_banana": [231.025, 232.936], "i_am_eating_the_banana": [233.286, 236.006], "kicking_the_ball": [236.356, 238.345], "i_am_kicking_the_ball": [238.695, 240.803], "throwing_the_ball": [241.153, 243.072], "i_am_throwing_the_ball": [243.422, 246.11], "holding_the_ball": [246.46, 247.825], "i_am_holding_the_ball": [248.175, 250.347], "reading_the_book": [250.697, 252.593], "i_am_reading_the_book": [252.943, 255.557], "holding_the_cup": [255.907, 257.326], "i_am_holding_the_cup": [257.676, 260.338], "building_a_house": [260.688, 262.754], "i_am_building_a_house": [263.104, 265.913], "bird_is_flying": [266.263, 268.376], "the_bird_is_flying": [268.726, 270.602], "what_is_happening": [270.952, 272.223], "bird_is_nesting": [272.573, 274.691], "the_bird_is_nesting": [275.041, 276.966], "fish_is_swimming": [277.316, 278.815], "the_fish_is_swimming": [279.165, 281.237], "dog_is_running": [281.587, 283.528], "the_dog_is_running": [283.878, 286.062], "dog_is_sleeping": [286.412, 288.522], "the_dog_is_sleeping": [288.872, 291.086], "cat_is_sleeping": [291.436, 293.492], "the_cat_is_sleeping": [293.842, 296.129], "cat_is_jumping": [296.479, 298.363], "the_cat_is_jumping": [298.713, 300.925], "boy_is_eating": [301.275, 303.233], "the_boy_is_eating": [303.583, 305.701], "boy_is_reading": [306.051, 307.987], "the_boy_is_reading": [308.337, 310.508], "girl_is_singing": [310.858, 312.772], "the_girl_is_singing": [313.122, 315.267], "girl_is_painting": [315.617, 317.544], "the_girl_is_painting": [317.894, 320.095], "baby_is_crying": [320.445, 322.599], "the_baby_is_crying": [322.949, 325.237], "baby_is_laughing": [325.587, 327.63], "the_baby_is_laughing": [327.98, 330.26], "man_is_cooking": [330.61, 332.352], "the_man_is_cooking": [332.702, 334.668], "woman_is_driving": [335.018, 336.956], "the_woman_is_driving": [337.306, 339.636], "big_dog": [339.986, 341.494], "this_is_a_big_dog": [341.844, 344.753], "what_do_you_see": [345.103, 346.489], "small_dog": [346.839, 348.383], "this_is_a_small_dog": [348.733, 351.781], "red_apple": [352.131, 353.301], "this_is_a_red_apple": [353.651, 355.879], "green_apple": [356.229, 357.696], "this_is_a_green_apple": [358.046, 360.402], "red_car": [360.752, 361.99], "this_is_a_red_car": [362.34, 363.952], "blue_car": [364.302, 365.638], "this_is_a_blue_car": [365.988, 368.138], "one_ball": [368.488, 369.857], "i_see_one_ball": [370.207, 372.658], "two_balls": [373.008, 374.506], "i_see_two_balls": [374.856, 376.916], "three_fish": [377.266, 379.203], "i_see_three_fish": [379.553, 381.554], "one_fish": [381.904, 383.261], "i_see_one_fish": [383.611, 385.627], "hot_soup": [385.977, 387.491], "the_soup_is_hot": [387.841, 389.971], "cold_drink": [390.321, 391.797], "the_drink_is_cold": [392.147, 394.399], "happy_boy": [394.749, 395.983], "the_boy_is_happy": [396.333, 398.064], "sad_boy": [398.414, 399.999], "the_boy_is_sad": [400.349, 402.535], "yellow_hat": [402.885, 404.242], "this_is_a_yellow_hat": [404.592, 406.385], "black_hat": [406.735, 408.196], "this_is_a_black_hat": [408.546, 410.481], "the_boy": [410.831, 412.027], "the_girl": [412.377, 413.491], "mum": [413.841, 414.415], "dad": [414.765, 415.555], "the_baby": [415.905, 416.811], "the_dog": [417.161, 418.088], "the_cat": [418.438, 419.398], "the_teacher": [419.748, 420.737], "grandma": [421.087, 421.949], "an_apple": [422.299, 423.323], "a_book": [423.673, 424.559], "a_ball": [424.909, 425.808], "the_car": [426.158, 427.144], "a_cup": [427.494, 428.379], "a_bone": [428.729, 429.684], "the_ipad": [430.034, 431.168], "a_pencil": [431.518, 432.539], "water": [432.889, 433.76], "a_toothbrush": [434.11, 435.406], "in_the_kitchen": [435.756, 436.962], "in_bed": [437.312, 438.313], "at_the_park": [438.663, 439.846], "at_school": [440.196, 441.209], "on_the_road": [441.559, 442.681], "at_the_pool": [443.031, 444.104], "on_the_sofa": [444.454, 445.693], "in_the_garden": [446.043, 447.228], "in_the_bathroom": [447.578, 448.847], "in_the_car": [449.197, 450.342], "in_the_morning": [450.692, 451.846], "in_the_afternoon": [452.196, 453.589], "at_night": [453.939, 454.82], "at_bedtime": [455.17, 456.162], "feels_happy": [456.512, 458.178], "feels_sad": [458.528, 459.821], "feels_tired": [460.171, 461.59], "feels_angry": [461.94, 463.274], "feels_scared": [463.624, 465.179], "the_boy_is_eating_an_apple_in_the_kitche": [465.529, 469.126], "what_is_the_boy_eating": [469.476, 471.152], "who_is_eating": [471.502, 472.816], "where_is_the_boy": [473.166, 474.511], "when_is_the_boy_eating": [474.861, 476.721], "how_does_the_boy_feel": [477.071, 478.718], "the_girl_is_reading_a_book_in_bed_at_nig": [479.068, 482.04], "what_is_the_girl_reading": [482.39, 484.065], "who_is_reading": [484.415, 485.766], "where_is_the_girl": [486.116, 487.486], "when_is_the_girl_reading": [487.836, 489.679], "how_does_the_girl_feel": [490.029, 491.749], "the_dog_is_chewing_a_bone_in_the_garden_": [492.099, 495.91], "what_is_the_dog_chewing": [496.26, 498.043], "who_is_chewing": [498.393, 499.858], "where_is_the_dog": [500.208, 501.627], "when_is_the_dog_chewing": [501.977, 503.915], "how_does_the_dog_feel": [504.265, 505.947], "mum_is_cooking_rice_in_the_kitchen_in_th": [506.297, 509.726], "what_is_mum_cooking": [510.076, 511.537], "who_is_cooking": [511.887, 513.226], "where_is_mum": [513.576, 514.806], "when_is_mum_cooking": [515.156, 516.823], "how_does_mum_feel": [517.173, 518.59], "dad_is_driving_the_car_on_the_road_in_th": [518.94, 521.73], "what_is_dad_driving": [522.08, 523.94], "who_is_driving": [524.29, 525.82], "where_is_dad": [526.17, 527.61], "when_is_dad_driving": [527.96, 529.9], "how_does_dad_feel": [530.25, 532.211], "the_baby_is_holding_a_cup_in_bed_at_nigh": [532.561, 535.621], "what_is_the_baby_holding": [535.971, 537.891], "who_is_holding": [538.241, 539.831], "where_is_the_baby": [540.181, 541.841], "when_is_the_baby_holding": [542.191, 544.311], "how_does_the_baby_feel": [544.661, 546.641], "the_teacher_is_holding_a_pencil_at_schoo": [546.991, 550.441], "what_is_the_teacher_holding": [550.791, 552.741], "where_is_the_teacher": [553.091, 554.491], "when_is_the_teacher_holding": [554.841, 556.803], "how_does_the_teacher_feel": [557.153, 558.903], "the_boy_is_kicking_a_ball_at_the_park_in": [559.253, 562.693], "what_is_the_boy_kicking": [563.043, 564.433], "who_is_kicking": [564.783, 568.113], "when_is_the_boy_kicking": [568.463, 570.403], "the_girl_is_watching_the_ipad_on_the_sof": [570.753, 574.063], "what_is_the_girl_watching": [574.413, 576.243], "who_is_watching": [576.593, 578.033], "when_is_the_girl_watching": [578.383, 580.403], "the_cat_is_holding_a_ball_on_the_sofa_in": [580.753, 584.343], "what_is_the_cat_holding": [584.693, 586.353], "where_is_the_cat": [586.703, 588.253], "when_is_the_cat_holding": [588.603, 590.643], "how_does_the_cat_feel": [590.993, 592.603], "grandma_is_drinking_water_in_the_garden_": [592.953, 596.148], "what_is_grandma_drinking": [596.498, 598.217], "who_is_drinking": [598.567, 600.009], "where_is_grandma": [600.359, 601.792], "when_is_grandma_drinking": [602.142, 604.139], "how_does_grandma_feel": [604.489, 606.32], "dad_is_holding_a_toothbrush_in_the_bathr": [606.67, 610.66], "what_is_dad_holding": [611.01, 612.727], "when_is_dad_holding": [613.077, 614.863], "the_boy_is_eating_bread_in_the_car_in_th": [615.213, 618.468], "the_girl_is_reading_a_book_at_school_in_": [618.818, 622.278], "mum_is_driving_the_car_on_the_road_at_ni": [622.628, 625.719], "what_is_mum_driving": [626.069, 627.825], "when_is_mum_driving": [628.175, 630.014], "the_baby_is_holding_a_ball_at_the_park_i": [630.364, 634.139], "what": [634.489, 635.342], "who": [635.692, 636.488], "where": [636.838, 637.714], "when": [638.064, 638.951], "how": [639.301, 640.145], "try_again": [640.495, 642.823], "your_turn": [643.173, 644.492], "say_it_with_me": [644.842, 645.982], "level_up": [646.332, 649.543], "amazing_pop_the_bubbles": [649.893, 652.944], "all_done_great_work_today": [653.294, 654.934], "something_is_missing_ask_me": [655.284, 656.306], "ask_me": [656.656, 657.775], "pop": [658.125, 659.368], "yes": [659.718, 660.826], "that_s_it": [661.176, 662.214], "good_job": [662.564, 663.686], "you_got_it": [664.036, 664.934], "well_done": [665.284, 666.338], "tap_the_picture": [666.688, 668.05], "listen": [668.4, 669.169], "name_oba_0": [669.519, 671.189], "name_oba_1": [671.539, 673.519], "name_oba_2": [673.869, 675.849], "name_oba_3": [676.199, 677.979], "name_oba_4": [678.329, 680.099], "name_oba_5": [680.449, 682.509], "name_oba_6": [682.859, 686.91], "name_oba_7": [687.26, 691.52], "name_oba_8": [691.87, 694.33], "name_oba_9": [694.68, 696.19], "name_june_0": [696.54, 697.32], "name_june_1": [697.67, 701.15], "name_june_2": [701.5, 703.49], "name_june_3": [703.84, 705.74], "name_june_4": [706.09, 707.91], "name_june_5": [708.26, 709.76], "name_june_6": [710.11, 713.64], "name_june_7": [713.99, 716.81], "name_june_8": [717.16, 719.66], "name_june_9": [720.01, 721.49]}};
-let voice=null;
-function pickVoice(){
-  if(!("speechSynthesis" in window))return;
-  const vs=speechSynthesis.getVoices();
-  voice=vs.find(v=>/^en/i.test(v.lang)&&/Samantha|Daniel|Google US|Karen|Moira/i.test(v.name))||vs.find(v=>/^en/i.test(v.lang))||null;
-}
-if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
-const audioCache={};let current=null;
-function clipFor(part){
-  let t=part.trim();if(!t)return null;if(!/[.!?]$/.test(t))t+=".";
-  return CLIPS[t.toLowerCase()]||null;
-}
-const sprites={};let stopTimer=null;let playToken=0;
-function spriteAudio(v){
-  let a=sprites[v];if(!a){a=new Audio("voice_"+v+".mp3");a.preload="auto";sprites[v]=a}
-  return a;
-}
-function playClip(id,cb){
-  const v=S.roundVoice||"jessica";const span=(SPRITES[v]||{})[id];if(!span){cb&&cb();return}
-  const a=spriteAudio(v);current=a;const token=++playToken;
-  const done=()=>{if(!cb)return;const f=cb;cb=null;if(token!==playToken){return}a.pause();a.ontimeupdate=null;a.onplaying=null;clearTimeout(stopTimer);f()};
-  const go=()=>{
-    clearTimeout(stopTimer);a.ontimeupdate=null;a.onplaying=null;
-    try{a.currentTime=span[0]}catch(e){}
-    a.playbackRate=S.settings.rate<0.85?0.9:1;
-    const end=span[1]+0.08;                       // small tail so the last consonant is never clipped (the gap after each line is silence)
-    const dur=(end-span[0])/a.playbackRate;
-    // Stop on the audio's own position, checked often; the wall-clock timer is only a safety net and starts once sound is actually playing.
-    const tick=()=>{if(!cb||token!==playToken){cb=null;return}if(a.currentTime>=end){done();return}requestAnimationFrame(tick)};
-    a.onplaying=()=>{a.onplaying=null;clearTimeout(stopTimer);stopTimer=setTimeout(done,dur*1000+600);requestAnimationFrame(tick)};
-    stopTimer=setTimeout(done,dur*1000+4000);      // if play never starts
-    const p=a.play();if(p&&p.catch)p.catch(()=>done());
-  };
-  if(a.readyState>=1)go();else{a.addEventListener("loadedmetadata",go,{once:true});a.load()}
-}
-function tts(text,cb){
-  if(!("speechSynthesis" in window)){cb&&cb();return}
-  const u=new SpeechSynthesisUtterance(text);
-  if(voice)u.voice=voice;u.rate=S.settings.rate;u.pitch=1.05;
-  u.onend=()=>cb&&cb();u.onerror=()=>cb&&cb();speechSynthesis.speak(u);
-}
-function stopAll(){playToken++;if("speechSynthesis" in window)speechSynthesis.cancel();clearTimeout(stopTimer);if(current){current.pause();current.ontimeupdate=null;current.onplaying=null;current=null}}
-// Splits text into sentences and plays each from a clip when one exists, otherwise speaks it.
-function speak(text,cb){
-  stopAll();
-  const whole=clipFor(text);
-  const parts=whole?[text]:(text.match(/[^.!?]+[.!?]?/g)||[text]);
-  let i=0;
-  (function next(){
-    if(i>=parts.length){cb&&cb();return}
-    const p=parts[i++];const src=clipFor(p);
-    if(src)playClip(src,()=>setTimeout(next,120));else tts(p,next);
-  })();
-}
-// iPad plays audio only after a touch: unlock on the first tap.
-let unlocked=false;
-document.addEventListener("touchend",()=>{if(unlocked)return;unlocked=true;for(const v of ["jessica","dad","mum"]){const a=spriteAudio(v);a.volume=1;a.load()}},{once:true,passive:true});
-
-// ---------- Helpers ----------
-const $=id=>document.getElementById(id);
-const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
-const levelItems=n=>LEVELS[n-1].items;
-let last=null;
-// Spaced review: an item is mastered after 3 first-try rights in a row, then comes back after 1, 3, 7 and 14 days. A miss sends it back to the start.
-const SR_DAYS=[1,3,7,14];
-function srKey(it){return (S.mode==="find"?"find|":"read|")+it.w+"|"+(it.lvl||1)}
-function srRec(){const k=KIDS[S.kid];k.sr=k.sr||{};return k.sr}
-function srDue(){
-  const sr=srRec(),now=Date.now(),pool=S.mode==="find"?levelItems(1):ALL.filter(i=>(i.lvl||1)<=S.settings.level);
-  return pool.filter(i=>{const r=sr[srKey(i)];return r&&r.due&&r.due<=now&&i!==last});
-}
-function srUpdate(it,firstTryRight,wrong){
-  const sr=srRec(),k=srKey(it),r=sr[k]||(sr[k]={n:0,step:0,due:null});
-  if(wrong){r.n=0;r.step=0;r.due=null}
-  else if(firstTryRight){
-    r.n++;
-    if(S.review){r.step=Math.min(r.step+1,SR_DAYS.length-1);r.due=Date.now()+SR_DAYS[r.step]*864e5}
-    else if(r.n>=3&&!r.due){r.step=0;r.due=Date.now()+SR_DAYS[0]*864e5}
-  }
-  save("tt.kids",KIDS);
-}
-function pick(){
-  // Find it always uses one-word items (no reading). Read it and Say it use the set level.
-  S.review=false;
-  if(S.mode!=="say"&&Math.random()<0.34){const due=srDue();if(due.length){S.review=true;return due[Math.random()*due.length|0]}}
-  const src=S.mode==="find"?levelItems(1):levelItems(S.settings.level);
-  return bagDraw("item:"+S.mode+":"+(S.mode==="find"?1:S.settings.level),src);
-}
-// Shuffle bag: every item in a level comes up once before any repeats. Bags live per child so they survive closing the app.
-function bagDraw(key,src){
-  const k=KIDS[S.kid];k.bags=k.bags||{};let bag=k.bags[key];
-  const valid=i=>i>=0&&i<src.length;
-  if(!bag||!bag.length||!bag.every(valid)){bag=shuffle(src.map((_,i)=>i));if(src.length>1&&src[bag[bag.length-1]]===last){bag.unshift(bag.pop())}}
-  const i=bag.pop();k.bags[key]=bag;save("tt.kids",KIDS);
-  return src[i]||src[0];
-}
-function distractors(item){
-  // The workbook's trick: wrong answers share part of the sentence, so meaning has to do the work.
-  let src;
-  if(S.mode==="find")src=levelItems(1).filter(i=>i.w!==item.w);
-  else{
-    const same=levelItems(item.lvl).filter(i=>i!==item&&i.e!==item.e);
-    const key=item.w.split(" ");
-    const shared=same.filter(i=>key.some(k=>k.length>3&&i.w.includes(k)));
-    src=shuffle([...shared]).concat(shuffle(same.filter(i=>!shared.includes(i))));
-  }
-  const seen=new Set([item.e]),out=[];
-  for(const d of src){if(!seen.has(d.e)){seen.add(d.e);out.push(d)}if(out.length===2)break}
-  return out;
-}
-function praise(){
-  const n=S.settings.name;
-  const named=["Yes, "+n+"!","Good job, "+n+"!","Well done, "+n+"!","You got it, "+n+"!","That's it, "+n+"!"].filter(t=>clipFor(t));
-  const plain=["Yes!","That's it!","Good job!","You got it!","Well done!"];
-  const pool=(named.length&&Math.random()<0.5)?named:plain;
-  return pool[Math.random()*pool.length|0];
-}
-function named(line,fallback){const n=S.settings.name;const t=line.replace("{n}",n);return clipFor(t)?t:fallback}
-function setStars(){$("stars").textContent="⭐ "+S.stars}
-function setLevelBadge(){
-  const b=$("lvlBadge");
-  if(S.mode==="find")b.textContent="Words";
-  else if(S.mode==="ask")b.textContent="WH "+S.settings.wh+" · "+WH_LEVELS[S.settings.wh-1].name;
-  else b.textContent="Level "+S.settings.level+" · "+LEVELS[S.settings.level-1].name;
-}
-let lastScene=null;
-function askRound(){
-  const L=WH_LEVELS[S.settings.wh-1];
-  const sc=bagDraw("scene",SCENES);lastScene=sc;S.scene=sc;
-  const type=L.types[Math.random()*L.types.length|0];S.wh=type;
-  const tiles=$("tiles"),actions=$("actions"),hint=$("hint"),pt=$("promptText"),big=$("bigPic");
-  tiles.hidden=false;tiles.innerHTML="";actions.innerHTML="";big.hidden=false;pt.className="text";
-  const answer=sc[type];
-  if(L.ask){
-    // Ask me: one part of the scene is hidden. He picks the question word that gets it.
-    const hidden=sc.pic.replace(answer.e,"❓");
-    big.textContent=type==="how"?sc.pic+"❓":hidden;
-    pt.textContent="Ask me";
-    hint.textContent="Something is missing. He taps the question word that asks for it.";
-    const others=shuffle(WH_ORDER.filter(t=>t!==type)).slice(0,2);
-    S.choices=shuffle([type,...others]);
-    for(const t of S.choices){
-      const b=document.createElement("button");b.className="tile";b.style.fontSize="clamp(2rem,6vw,4rem)";b.style.fontFamily="var(--display)";b.textContent=WH_WORD[t];
-      b.onclick=()=>chooseWH(b,t===type,()=>{if(IMGS[sc.img]){big.innerHTML="";const im=document.createElement("img");im.src=IMGS[sc.img];im.alt=sc.sentence;big.appendChild(im)}else big.textContent=sc.pic+(type==="how"?sc.how.e:"");return WH_WORD[type]+" "+sc.a[type]});
-      tiles.appendChild(b);
-    }
-    speak("Something is missing. Ask me.");
-    return;
-  }
-  if(IMGS[sc.img]){big.innerHTML="";const im=document.createElement("img");im.src=IMGS[sc.img];im.alt=sc.sentence;big.appendChild(im)}else big.textContent=sc.pic+(type==="how"?sc.how.e:"");
-  pt.textContent=sc.q[type];
-  hint.textContent="He hears the question and taps the answer. Speaker repeats the question.";
-  let pool;
-  if(L.mixed){ // wrong answers are other parts of the same scene, so the question word must do the work
-    pool=shuffle(WH_ORDER.filter(t=>t!==type).map(t=>sc[t]));
-  }else pool=shuffle(WH_POOL[type].filter(p=>p.e!==answer.e));
-  const d=[];for(const p of pool){if(!d.some(x=>x.e===p.e)&&p.e!==answer.e)d.push(p);if(d.length===2)break}
-  S.choices=shuffle([answer,...d]);
-  for(const c of S.choices){
-    const b=document.createElement("button");b.className="tile";fillTile(b,c);b.setAttribute("aria-label",c.w);
-    b.onclick=()=>chooseWH(b,c===answer,()=>sc.a[type]);tiles.appendChild(b);
-  }
-  speak(sc.q[type]);
-}
-function chooseWH(btn,ok,answerText){
-  if(S.locked)return;
-  const stat=S.today.ask;stat[1]++;
-  const firstTry=!S.triedThisRound;S.triedThisRound=true;
-  const L=WH_LEVELS[S.settings.wh-1];
-  logEvent({mode:"ask",wh:S.settings.wh,item:L.ask?"Ask me: "+S.wh+" ("+S.scene.sentence+")":S.scene.q[S.wh],target:L.ask?WH_WORD[S.wh]:S.scene[S.wh].w,choice:btn.textContent,correct:ok,first_try:firstTry&&ok,replays:S.replays||0,ms:firstTry?Date.now()-S.roundT0:undefined});
-  if(ok){
-    S.locked=true;stat[0]++;btn.classList.add("good");
-    [...$("tiles").children].forEach(x=>{if(x!==btn)x.classList.add("dim")});
-    S.stars++;S.streak++;setStars();persistToday();trackAsk(true);
-    const a=answerText();
-    speak(praise()+" "+a,()=>{
-      const ac=$("actions");ac.innerHTML="";
-      ac.append(mk("🔊 Hear it again","btn",()=>speak(a)),mk("Whole story","btn",()=>speak(S.scene.sentence)),mk("Next ▶","btn primary",()=>afterRound()));
-      $("hint").textContent="Your turn: say \""+a.replace(/\.$/,"")+"\". Then tap Next.";
-      speak("Your turn. "+a);
-    });
-  }else{
-    btn.classList.add("bad");S.streak=0;persistToday();trackAsk(false);
-    speak("Try again. "+(WH_LEVELS[S.settings.wh-1].ask?"Ask me.":S.scene.q[S.wh]));
-    setTimeout(()=>btn.classList.remove("bad"),600);
-  }
-}
-function trackAsk(ok){
-  S.recentAsk.push(ok);if(S.recentAsk.length>10)S.recentAsk.shift();
-  if(S.settings.auto&&S.recentAsk.length===10&&S.recentAsk.filter(Boolean).length>=8&&S.settings.wh<WH_LEVELS.length){
-    S.settings.wh++;syncKid();S.recentAsk=[];speak("Level up!");
-  }
-}
-function mk(label,cls,fn){const b=document.createElement("button");b.className=cls;b.textContent=label;b.onclick=fn;return b}
-
-// ---------- Rounds ----------
-function pickVoice2(){const v=S.settings.voice;S.roundVoice=v==="both"?(S.roundVoice==="dad"?"mum":"dad"):v}
-function newRound(){
-  S.locked=false;S.triedThisRound=false;S.replays=0;S.roundT0=Date.now();pickVoice2();
-  if(S.mode==="ask"){setLevelBadge();askRound();return}
-  S.item=pick();last=S.item;setLevelBadge();
-  const tiles=$("tiles"),actions=$("actions"),hint=$("hint"),pt=$("promptText"),big=$("bigPic");
-  tiles.innerHTML="";actions.innerHTML="";big.hidden=true;pt.className="text";
-  if(S.mode==="say"){
-    tiles.hidden=true;
-    big.hidden=false;fillBig(big,S.item,S.item.e);
-    pt.textContent=S.item.q;
-    hint.textContent="Tap the speaker to hear the question. Model the answer, then give him time.";
-    actions.append(
-      mk("🔊 "+S.item.w,"btn primary",()=>speak(S.item.w)),
-      mk("Whole sentence","btn",()=>speak(S.item.s)),
-      mk("✅ He said it","btn good",()=>scoreSay(2)),
-      mk("👍 He tried","btn",()=>scoreSay(1)),
-      mk("Skip","btn soft",()=>newRound()));
-    speak(S.item.q);
-    return;
-  }
-  tiles.hidden=false;
-  S.choices=shuffle([S.item,...distractors(S.item)]);
-  for(const c of S.choices){
-    const b=document.createElement("button");b.className="tile";fillTile(b,c);b.setAttribute("aria-label",c.w);
-    b.onclick=()=>choose(b,c);tiles.appendChild(b);
-  }
-  if(S.mode==="find"){
-    pt.textContent="Tap the speaker";pt.classList.add("hidden-word");
-    hint.textContent="He hears the word, then taps the picture.";
-    speak("Find the "+S.item.w);
-  }else{
-    pt.textContent=S.item.s;
-    hint.textContent="He reads the sentence and taps the matching picture. Speaker reads it aloud.";
-  }
-}
-function choose(btn,c){
-  if(S.locked)return;
-  const stat=S.today[S.mode];stat[1]++;
-  const firstTry=!S.triedThisRound;S.triedThisRound=true;
-  logEvent({mode:S.mode,level:S.mode==="read"?S.settings.level:1,item:S.mode==="find"?"Find the "+S.item.w:S.item.s,target:S.item.w,choice:c.w,correct:c===S.item,first_try:firstTry&&c===S.item,replays:S.replays||0,ms:firstTry?Date.now()-S.roundT0:undefined,review:S.review||undefined});
-  if(firstTry)srUpdate(S.item,c===S.item,c!==S.item);
-  if(c===S.item){
-    S.locked=true;stat[0]++;btn.classList.add("good");
-    [...$("tiles").children].forEach(x=>{if(x!==btn)x.classList.add("dim")});
-    S.stars++;S.streak++;setStars();persistToday();
-    if(S.mode==="read")track(true);
-    speak(praise()+" "+S.item.s,()=>{
-      const a=$("actions");a.innerHTML="";
-      a.append(mk("🔊 Hear it again","btn",()=>speak(S.item.s)),mk("Next ▶","btn primary",()=>afterRound()));
-      $("hint").textContent="Your turn: say \""+S.item.w+"\". Then tap Next.";
-      speak((Math.random()<0.5?named("{n}, your turn.","Your turn."):"Your turn.")+" "+S.item.w+".");
-    });
-  }else{
-    btn.classList.add("bad");S.streak=0;persistToday();
-    if(S.mode==="read")track(false);
-    speak((Math.random()<0.4?named("Try again, {n}.","Try again."):"Try again.")+" "+(S.mode==="find"?"Find the "+S.item.w:S.item.s));
-    setTimeout(()=>btn.classList.remove("bad"),600);
-  }
-}
-// Auto level-up: 8 of the last 10 Read it answers right (first-try only counts as right).
-function track(ok){
-  S.recent.push(ok);if(S.recent.length>10)S.recent.shift();
-  if(S.settings.auto&&S.recent.length===10&&S.recent.filter(Boolean).length>=8&&S.settings.level<LEVELS.length){
-    S.settings.level++;syncKid();S.recent=[];
-    speak("Level up!");
-  }
-}
-function scoreSay(n){
-  const stat=S.today.say;stat[1]++;
-  logEvent({mode:"say",level:S.settings.level,item:S.item.q,target:S.item.w,score:n,correct:n>0,first_try:n===2});
-  if(n>0){stat[0]++;S.stars+=n;S.streak++;setStars();speak(praise()+" "+S.item.s,()=>afterRound())}
-  else afterRound();
-  persistToday();
-}
-function afterRound(){
-  if(S.sessionEnd&&Date.now()>S.sessionEnd){endSession();return}
-  if(S.streak>0&&S.streak%S.settings.streak===0)bubbleBreak();
-  else newRound();
-}
-
-// ---------- Bubble break (in-app reward, 20 seconds) ----------
-let bubbleTimer=null;
-function bubbleBreak(){
-  $("celebText").textContent=S.settings.streak+" in a row"+(S.settings.name?", "+S.settings.name:"")+"!";
-  $("celebrate").hidden=false;speak(named("Amazing, {n}! Pop the bubbles!","Amazing! Pop the bubbles!"));
-  const box=$("bubbles");box.innerHTML="";
-  const faces=["🐘","🐶","🐱","⭐","🎈","🍎","🚗","🐟","🦁","🎉"];
-  let popped=0;const t0=Date.now();
-  function spawn(){
-    if(Date.now()-t0>20000){$("bubbleHint").textContent="Popped "+popped+"! Tap Keep going.";return}
-    const b=document.createElement("button");b.className="bubble";b.textContent=faces[Math.random()*faces.length|0];
-    b.style.left=(Math.random()*80+5)+"%";b.style.top="100%";b.style.animationDuration=(4+Math.random()*3)+"s";
-    b.onclick=()=>{popped++;b.remove();$("bubbleHint").textContent="Popped "+popped+"!";speak("Pop!")};
-    b.onanimationend=()=>b.remove();box.appendChild(b);
-    bubbleTimer=setTimeout(spawn,700);
-  }
-  spawn();
-}
-$("celebNext").onclick=()=>{clearTimeout(bubbleTimer);$("bubbles").innerHTML="";$("celebrate").hidden=true;newRound()};
-
-// ---------- Session ----------
-function startSession(){
-  SESSION=Date.now().toString(36);
-  S.sessionEnd=S.settings.session?Date.now()+S.settings.session*60000:0;
-}
-function endSession(){
-  const d=S.today;
-  $("doneText").textContent="All done"+(S.settings.name?", "+S.settings.name:"")+"!";
-  $("doneStats").textContent="⭐ "+S.stars+" today · Find it "+d.find[0]+"/"+d.find[1]+" · Read it "+d.read[0]+"/"+d.read[1]+" · Say it "+d.say[0]+"/"+d.say[1]+" · Ask it "+d.ask[0]+"/"+d.ask[1];
-  const rl=$("rewardLink");
-  if(/^https?:\/\//.test(S.settings.reward)){rl.href=S.settings.reward;rl.hidden=false}else rl.hidden=true;
-  flushLog();$("done").hidden=false;speak(named("All done, {n}! Great work today.","All done! Great work today."));
-}
-$("doneAgain").onclick=()=>{$("done").hidden=true;startSession();newRound()};
-
-$("speak").onclick=()=>{
-  S.replays=(S.replays||0)+1;
-  if(S.mode==="ask")speak(WH_LEVELS[S.settings.wh-1].ask?"Something is missing. Ask me.":S.scene.q[S.wh]);
-  else if(S.mode==="find")speak("Find the "+S.item.w);
-  else if(S.mode==="read")speak(S.item.s);
-  else speak(S.item.q);
-};
-const MODES=["find","read","say","ask"];
-for(const m of MODES){
-  $("m-"+m).onclick=()=>{S.mode=m;for(const k of MODES)$("m-"+k).setAttribute("aria-pressed",String(k===m));newRound()};
-}
-
-// ---------- Settings (behind a parent code so he cannot change them) ----------
-function openSheet(){
-  $("pinGate").hidden=false;$("settingsBody").hidden=true;$("pinIn").value="";$("sheet").hidden=false;
-}
-function showSettings(){
-  $("pinGate").hidden=true;$("settingsBody").hidden=false;
-  $("kidSel").innerHTML=Object.keys(KIDS).map(k=>`<option value="${k}" ${k===S.kid?"selected":""}>${KIDS[k].emoji} ${KIDS[k].name}</option>`).join("");$("reward").value=S.settings.reward;
-  $("level").innerHTML=LEVELS.map(L=>`<option value="${L.n}" ${L.n===S.settings.level?"selected":""}>Level ${L.n}: ${L.name} (e.g. "${L.items[0].s}")</option>`).join("");
-  $("whLevel").innerHTML=WH_LEVELS.map(L=>`<option value="${L.n}" ${L.n===S.settings.wh?"selected":""}>Stage ${L.n}: ${L.name}</option>`).join("");
-  $("autoLevel").value=String(S.settings.auto);$("sessionLen").value=String(S.settings.session);
-  $("streakLen").value=String(S.settings.streak);$("rate").value=String(S.settings.rate);$("pinNew").value=S.settings.pin;$("voice").value=S.settings.voice;
-  const g=$("statGrid");g.innerHTML="<span></span><b>right</b><b>tries</b>"+MODES.map(k=>`<span>${{find:"Find it",read:"Read it",say:"Say it",ask:"Ask it"}[k]}</span><b>${S.today[k][0]}</b><b>${S.today[k][1]}</b>`).join("");
-}
-$("gear").onclick=openSheet;
-$("pinGo").onclick=()=>{const v=$("pinIn").value.trim();if(!S.settings.pin){$("sheet").hidden=true;showSetup();return}if(v===S.settings.pin)showSettings();else{$("pinIn").value="";$("pinIn").placeholder="wrong code"}};
-$("pinCancel").onclick=()=>$("sheet").hidden=true;
-$("sheet").onclick=e=>{if(e.target===$("sheet"))$("sheet").hidden=true};
-$("saveSettings").onclick=()=>{
-  const pin=$("pinNew").value.trim();
-  S.settings={...S.settings,reward:$("reward").value.trim(),streak:+$("streakLen").value,rate:+$("rate").value,
-    level:+$("level").value,wh:+$("whLevel").value,auto:+$("autoLevel").value,session:+$("sessionLen").value,voice:$("voice").value,pin:/^\d{4}$/.test(pin)?pin:S.settings.pin};
-  const g={...S.settings};delete g.name;delete g.level;delete g.wh;delete g.auto;save("tt.settings",g);syncKid();
-  S.recent=[];S.recentAsk=[];$("sheet").hidden=true;startSession();newRound();
-};
-$("resetToday").onclick=()=>{S.today=freshToday();S.stars=0;S.streak=0;setStars();persistToday();showSettings()};
-// Start over: back to the starting level, wipe today's stars, drop unsent rounds for this child, and clear the cloud history. Two taps to confirm.
-let startOverArmed=0;
-$("startOver").onclick=async()=>{
-  const b=$("startOver"),note=$("startOverNote"),name=KIDS[S.kid].name;
-  if(!startOverArmed){startOverArmed=setTimeout(()=>{startOverArmed=0;b.textContent="Start over for this child";note.hidden=true},6000);b.textContent="Tap again to erase everything for "+name;note.hidden=false;note.textContent="Level, stars and the progress-page history for "+name+" will all go back to zero.";return}
-  clearTimeout(startOverArmed);startOverArmed=0;b.textContent="Start over for this child";b.disabled=true;
-  KIDS[S.kid]=JSON.parse(JSON.stringify(KIDS_DEFAULT[S.kid]||KIDS[S.kid]));save("tt.kids",KIDS);
-  for(let i=QUEUE.length-1;i>=0;i--)if(QUEUE[i].kid===S.kid)QUEUE.splice(i,1);save("tt.queue",QUEUE);
-  loadKid(S.kid);setStars();setLevelBadge();
-  let cloud="History on the progress page is cleared too.";
-  try{const r=await fetch("api/reset",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({pin:S.settings.pin,kid:S.kid})});if(!r.ok)cloud="Could not clear the progress page (code "+r.status+"). Use the reset link on that page."}
-  catch(e){cloud="No internet, so the progress page was not cleared. Use the reset link on that page later."}
-  b.disabled=false;note.hidden=false;note.textContent=name+" is back at the start on this iPad. "+cloud+" Other iPads keep their own level until you reset there.";
-  showSettings();
-};
-$("kidSel").onchange=()=>{syncKid();loadKid($("kidSel").value);setStars();setLevelBadge();$("whoBtn").textContent=KIDS[S.kid].emoji+" "+KIDS[S.kid].name;showSettings()};
-// Child picker
-function showPicker(){
-  $("whoBtns").innerHTML="";
-  for(const id in KIDS){const b=mk(KIDS[id].emoji+" "+KIDS[id].name,"btn primary",()=>{syncKid();loadKid(id);setStars();$("whoPick").hidden=true;$("whoBtn").textContent=KIDS[id].emoji+" "+KIDS[id].name;startSession();speak(named("Hello {n}! Let's play.","Listen."),()=>newRound())});b.style.fontSize="2rem";b.style.padding="28px 40px";$("whoBtns").appendChild(b)}
-  $("whoPick").hidden=false;
-}
-$("whoBtn").onclick=showPicker;
-
-// ---------- Boot ----------
-const lastKid=load("tt.kid",null);loadKid(KIDS[lastKid]?lastKid:Object.keys(KIDS)[0]);
-$("whoBtn").textContent=KIDS[S.kid].emoji+" "+KIDS[S.kid].name;
-setStars();startSession();
-newRound();
-function showSetup(){$("setup").hidden=false;setTimeout(()=>$("setupPin").focus(),50)}
-$("setupGo").onclick=()=>{const v=$("setupPin").value.trim();if(!/^\d{4}$/.test(v)){$("setupErr").hidden=false;return}
-  S.settings.pin=v;const g={...S.settings};delete g.name;delete g.level;delete g.wh;delete g.auto;save("tt.settings",g);$("setup").hidden=true;showPicker()};
-$("setupPin").addEventListener("keydown",e=>{if(e.key==="Enter")$("setupGo").click()});
-if(/^\d{4}$/.test(S.settings.pin))showPicker();else showSetup();
-if(!("speechSynthesis" in window))$("hint").textContent="This browser has no voice. Read the prompt aloud for him.";
-</script>
-
+<script src="vocab.js"></script>
+<script src="clips.js"></script>
+<script src="app.js"></script>
 <script>
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>
