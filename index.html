@@ -118,6 +118,13 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 </div>
 
 <!-- Child picker -->
+<div class="overlay" id="setup" hidden>
+  <h2>Set a parent code</h2>
+  <p style="max-width:420px;text-align:center">Four digits only you and your wife know. It opens settings and the progress page, and it must be the same code you set in Vercel (PARENT_PIN).</p>
+  <input class="pin" id="setupPin" inputmode="numeric" placeholder="••••" aria-label="Parent code" style="font-size:2rem;width:200px;text-align:center;letter-spacing:.4em;padding:14px;border-radius:14px;border:2px solid var(--edge)">
+  <div class="actions"><button class="btn primary" id="setupGo">Save code</button></div>
+  <div class="hint" id="setupErr" hidden>Four digits, please.</div>
+</div>
 <div class="overlay" id="whoPick" hidden>
   <h2>Who is playing?</h2>
   <div class="actions" id="whoBtns"></div>
@@ -149,7 +156,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
   <div class="card">
     <div id="pinGate">
       <h3>Parent settings</h3>
-      <p>Enter the parent code to open settings. Default code is 2468. Change it below once in.</p>
+      <p>Enter the parent code to open settings.</p>
       <input class="pin" id="pinIn" inputmode="numeric" placeholder="••••" aria-label="Parent code">
       <div class="row"><button class="btn primary" id="pinGo">Open</button><button class="btn" id="pinCancel">Cancel</button></div>
     </div>
@@ -299,12 +306,12 @@ const WH_LEVELS=[
 
 // ---------- State ----------
 const S = { mode:"find", stars:0, streak:0, item:null, choices:[], locked:false, recent:[], recentAsk:[], sessionEnd:0, timer:null, scene:null, wh:null,
-  settings:{name:"",reward:"",streak:5,rate:0.9,level:1,auto:1,session:10,pin:"2468",wh:1,voice:"jessica",v:2},
+  settings:{name:"",reward:"",streak:5,rate:0.9,level:1,auto:1,session:10,pin:"",wh:1,voice:"jessica",v:3},
   today:{find:[0,0],read:[0,0],say:[0,0],ask:[0,0]}, kid:null };
 const KIDS_DEFAULT={oba:{name:"Oba",emoji:"🧒",level:1,wh:1,auto:1},june:{name:"June",emoji:"👧",level:3,wh:2,auto:1}};
 const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-{const g=load("tt.settings",{});delete g.name;delete g.level;delete g.wh;delete g.auto;if(g.v!==2){g.voice="jessica";g.v=2}S.settings={...S.settings,...g}}
+{const g=load("tt.settings",{});delete g.name;delete g.level;delete g.wh;delete g.auto;if(g.v!==2&&g.v!==3){g.voice="jessica";g.v=2}if(g.v!==3){if(g.pin==="2468")g.pin="";g.v=3}S.settings={...S.settings,...g}}
 const dayKey=new Date().toDateString();
 const KIDS=load("tt.kids",null)||JSON.parse(JSON.stringify(KIDS_DEFAULT));
 for(const k in KIDS_DEFAULT)if(!KIDS[k])KIDS[k]=JSON.parse(JSON.stringify(KIDS_DEFAULT[k]));
@@ -683,7 +690,7 @@ function showSettings(){
   const g=$("statGrid");g.innerHTML="<span></span><b>right</b><b>tries</b>"+MODES.map(k=>`<span>${{find:"Find it",read:"Read it",say:"Say it",ask:"Ask it"}[k]}</span><b>${S.today[k][0]}</b><b>${S.today[k][1]}</b>`).join("");
 }
 $("gear").onclick=openSheet;
-$("pinGo").onclick=()=>{if($("pinIn").value.trim()===S.settings.pin)showSettings();else{$("pinIn").value="";$("pinIn").placeholder="wrong code"}};
+$("pinGo").onclick=()=>{const v=$("pinIn").value.trim();if(!S.settings.pin){$("sheet").hidden=true;showSetup();return}if(v===S.settings.pin)showSettings();else{$("pinIn").value="";$("pinIn").placeholder="wrong code"}};
 $("pinCancel").onclick=()=>$("sheet").hidden=true;
 $("sheet").onclick=e=>{if(e.target===$("sheet"))$("sheet").hidden=true};
 $("saveSettings").onclick=()=>{
@@ -722,7 +729,12 @@ $("whoBtn").onclick=showPicker;
 const lastKid=load("tt.kid",null);loadKid(KIDS[lastKid]?lastKid:Object.keys(KIDS)[0]);
 $("whoBtn").textContent=KIDS[S.kid].emoji+" "+KIDS[S.kid].name;
 setStars();startSession();
-newRound();showPicker();
+newRound();
+function showSetup(){$("setup").hidden=false;setTimeout(()=>$("setupPin").focus(),50)}
+$("setupGo").onclick=()=>{const v=$("setupPin").value.trim();if(!/^\d{4}$/.test(v)){$("setupErr").hidden=false;return}
+  S.settings.pin=v;const g={...S.settings};delete g.name;delete g.level;delete g.wh;delete g.auto;save("tt.settings",g);$("setup").hidden=true;showPicker()};
+$("setupPin").addEventListener("keydown",e=>{if(e.key==="Enter")$("setupGo").click()});
+if(/^\d{4}$/.test(S.settings.pin))showPicker();else showSetup();
 if(!("speechSynthesis" in window))$("hint").textContent="This browser has no voice. Read the prompt aloud for him.";
 </script>
 
