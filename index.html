@@ -131,6 +131,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
     <button class="lvl" id="whoBtn">👤</button>
     <div class="lvl" id="lvlBadge">Level 1</div>
     <div class="stars" id="stars">⭐ 0</div>
+    <button class="lvl" id="worldBtn" hidden style="background:var(--accent);color:var(--accent-ink)">👗 My world</button>
     <button class="gear" id="gear" aria-label="Parent settings">⚙️</button>
   </div>
 
@@ -188,6 +189,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
   <div class="hint" id="doneStats"></div>
   <div class="actions">
     <a class="btn primary" id="rewardLink" href="#" target="_blank" rel="noopener" hidden>▶️ Watch one video</a>
+    <button class="btn primary" id="doneWorld" hidden>👗 My world</button>
     <button class="btn" id="doneAgain">Play again</button>
   </div>
 </div>
@@ -210,7 +212,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
     <label for="whLevel">Ask it stage (WH questions)</label>
     <select id="whLevel"></select>
     <label for="autoLevel">Move up automatically</label>
-    <select id="autoLevel"><option value="1" selected>Yes, after 8 of the last 10 right</option><option value="0">No, I will set it</option></select>
+    <select id="autoLevel"><option value="1" selected>Yes, after 5 in a row or 8 of the last 10 right</option><option value="0">No, I will set it</option></select>
     <label>Activities shown</label>
     <div class="chips" id="modeChips"></div>
     <label>Word groups in play</label>
@@ -223,6 +225,8 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
     <input id="reward" placeholder="https://youtube.com/...">
     <label for="voice">Voice</label>
     <select id="voice"><option value="jessica">Jessica (default)</option><option value="mum">Mum</option><option value="dad">Dad</option><option value="both">Mum and Dad, taking turns</option></select>
+    <label for="worldOn">My World for this child (dress-up, room and star shop; stars come only from playing)</label>
+    <select id="worldOn"><option value="2">On, any time</option><option value="1">On, only when the session ends</option><option value="0">Off</option></select>
     <label for="rate">Voice speed</label>
     <select id="rate"><option value="0.75">Slow</option><option value="0.9" selected>Normal</option><option value="1">Quick</option></select>
     <label for="pinNew">Parent code</label>
@@ -258,6 +262,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 <script src="vocab.js"></script>
 <script src="clips.js"></script>
 <script src="app.js"></script>
+<script src="world.js"></script>
 <script>
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>

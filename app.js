@@ -113,7 +113,8 @@ const MODE_IDS=MODES.map(m=>m.id);const MODE_LABEL=Object.fromEntries(MODES.map(
 const S={mode:"find",stars:0,streak:0,item:null,choices:[],locked:false,recent:[],recentAsk:[],sessionEnd:0,scene:null,wh:null,
   settings:{name:"",reward:"",streak:5,rate:0.9,level:1,auto:1,session:10,pin:"",wh:1,voice:"jessica",v:4,modes:MODE_IDS.slice(),cats:Object.keys(VOCAB_CATS).concat(["legacy"])},
   today:{},kid:null};
-const KIDS_DEFAULT={oba:{name:"Oba",emoji:"🧒",level:2,wh:1,auto:1,v4:1,v5:1},june:{name:"June",emoji:"👧",level:3,wh:2,auto:1}};
+// world: My World (avatar, room, star shop). 2 = any time, 1 = only after the session, 0 = off. wallet: stars kept for the shop.
+const KIDS_DEFAULT={oba:{name:"Oba",emoji:"🧒",level:2,wh:1,auto:1,v4:1,v5:1,pron:"he",world:0,wallet:0},june:{name:"June",emoji:"👧",level:3,wh:2,auto:1,pron:"she",world:2,wallet:10}};
 const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 {const g=load("tt.settings",{});delete g.name;delete g.level;delete g.wh;delete g.auto;
@@ -126,6 +127,8 @@ for(const k in KIDS_DEFAULT)if(!KIDS[k])KIDS[k]=JSON.parse(JSON.stringify(KIDS_D
 for(const k in KIDS){const kd=KIDS[k];if(!kd.v4){kd.level=kd.level>=6?4:kd.level>=2?3:1;kd.v4=1}}
 // One-time move: Stage 1 was too easy, so a device that still has Oba on Stage 1 starts him on Stage 2.
 if(KIDS.oba&&!KIDS.oba.v5){if((KIDS.oba.level||1)<2)KIDS.oba.level=2;KIDS.oba.v5=1}
+// One-time: My World on for June (with 10 welcome stars), off for Oba.
+for(const k in KIDS){const kd=KIDS[k];if(kd.world===undefined){kd.world=k==="june"?2:0;kd.wallet=kd.wallet||(k==="june"?10:0);kd.pron=kd.pron||(k==="june"?"she":"he")}}
 save("tt.kids",KIDS);
 const freshToday=()=>Object.fromEntries(MODE_IDS.map(m=>[m,[0,0]]));
 function loadKid(id){
@@ -134,6 +137,7 @@ function loadKid(id){
   S.today=(k.day===dayKey&&k.today)?{...freshToday(),...k.today}:freshToday();
   S.stars=k.day===dayKey?(k.stars||0):0;S.streak=0;S.recent=[];S.recentAsk=[];
   save("tt.kid",id);
+  if(window.worldKidChanged)worldKidChanged();
 }
 function syncKid(){const k=KIDS[S.kid];if(!k)return;k.level=S.settings.level;k.wh=S.settings.wh;k.auto=S.settings.auto;k.today=S.today;k.stars=S.stars;k.day=dayKey;save("tt.kids",KIDS)}
 function persistToday(){syncKid()}
@@ -290,7 +294,7 @@ function tileButtons(choices,onTap,label){
 }
 function markRight(btn){S.locked=true;btn.classList.add("good");[...$("tiles").children].forEach(x=>{if(x!==btn)x.classList.add("dim")})}
 function markWrong(btn){btn.classList.add("bad");setTimeout(()=>btn.classList.remove("bad"),700)}
-function win(n){S.stars+=n||1;S.streak++;setStars();persistToday()}
+function win(n){S.stars+=n||1;S.streak++;const k=KIDS[S.kid];if(k)k.wallet=(k.wallet||0)+(n||1);setStars();persistToday();if(window.worldStarsChanged)worldStarsChanged()}
 function miss(){S.streak=0;persistToday()}
 function nextButtons(repeatText,extra){
   const a=$("actions");a.innerHTML="";
@@ -567,7 +571,7 @@ function showSettings(){
   $("level").innerHTML=STAGES.map(L=>`<option value="${L.n}" ${L.n===S.settings.level?"selected":""}>Stage ${L.n}: ${L.name} (e.g. "${L.eg}")</option>`).join("");
   $("whLevel").innerHTML=WH_LEVELS.map(L=>`<option value="${L.n}" ${L.n===S.settings.wh?"selected":""}>Stage ${L.n}: ${L.name}</option>`).join("");
   $("autoLevel").value=String(S.settings.auto);$("sessionLen").value=String(S.settings.session);
-  $("streakLen").value=String(S.settings.streak);$("rate").value=String(S.settings.rate);$("pinNew").value=S.settings.pin;$("voice").value=S.settings.voice;
+  $("streakLen").value=String(S.settings.streak);$("rate").value=String(S.settings.rate);$("pinNew").value=S.settings.pin;$("voice").value=S.settings.voice;$("worldOn").value=String(KIDS[S.kid].world||0);
   $("modeChips").innerHTML=MODES.map(m=>`<label><input type="checkbox" data-mode="${m.id}" ${S.settings.modes.includes(m.id)?"checked":""}>${m.e} ${m.label}</label>`).join("");
   const cats={...VOCAB_CATS,legacy:"Picture sentences (jobs, I can, I am…)"};
   $("catChips").innerHTML=Object.entries(cats).map(([k,n])=>`<label><input type="checkbox" data-cat="${k}" ${S.settings.cats.includes(k)?"checked":""}>${n}</label>`).join("");
@@ -585,6 +589,7 @@ $("saveSettings").onclick=()=>{
   const modes=[...document.querySelectorAll("#modeChips input:checked")].map(i=>i.dataset.mode);
   const cats=[...document.querySelectorAll("#catChips input:checked")].map(i=>i.dataset.cat);
   S.settings={...S.settings,reward:$("reward").value.trim(),streak:+$("streakLen").value,rate:+$("rate").value,level:+$("level").value,wh:+$("whLevel").value,auto:+$("autoLevel").value,session:+$("sessionLen").value,voice:$("voice").value,pin:/^\d{4}$/.test(pin)?pin:S.settings.pin,modes:modes.length?modes:["find"],cats:cats.length?cats:["food"]};
+  KIDS[S.kid].world=+$("worldOn").value;if(window.worldKidChanged)worldKidChanged();
   saveGlobal();syncKid();S.recent=[];S.recentAsk=[];$("sheet").hidden=true;renderModes();startSession();newRound();
 };
 $("resetToday").onclick=()=>{S.today=freshToday();S.stars=0;S.streak=0;setStars();persistToday();showSettings()};
