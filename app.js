@@ -113,7 +113,7 @@ const MODE_IDS=MODES.map(m=>m.id);const MODE_LABEL=Object.fromEntries(MODES.map(
 const S={mode:"find",stars:0,streak:0,item:null,choices:[],locked:false,recent:[],recentAsk:[],sessionEnd:0,scene:null,wh:null,
   settings:{name:"",reward:"",streak:5,rate:0.9,level:1,auto:1,session:10,pin:"",wh:1,voice:"jessica",v:4,modes:MODE_IDS.slice(),cats:Object.keys(VOCAB_CATS).concat(["legacy"])},
   today:{},kid:null};
-const KIDS_DEFAULT={oba:{name:"Oba",emoji:"🧒",level:1,wh:1,auto:1},june:{name:"June",emoji:"👧",level:3,wh:2,auto:1}};
+const KIDS_DEFAULT={oba:{name:"Oba",emoji:"🧒",level:2,wh:1,auto:1,v4:1,v5:1},june:{name:"June",emoji:"👧",level:3,wh:2,auto:1}};
 const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 {const g=load("tt.settings",{});delete g.name;delete g.level;delete g.wh;delete g.auto;
@@ -124,6 +124,8 @@ const KIDS=load("tt.kids",null)||JSON.parse(JSON.stringify(KIDS_DEFAULT));
 for(const k in KIDS_DEFAULT)if(!KIDS[k])KIDS[k]=JSON.parse(JSON.stringify(KIDS_DEFAULT[k]));
 // Old six-level ladder → five stages: 1→1, 2..5→3, 6→4
 for(const k in KIDS){const kd=KIDS[k];if(!kd.v4){kd.level=kd.level>=6?4:kd.level>=2?3:1;kd.v4=1}}
+// One-time move: Stage 1 was too easy, so a device that still has Oba on Stage 1 starts him on Stage 2.
+if(KIDS.oba&&!KIDS.oba.v5){if((KIDS.oba.level||1)<2)KIDS.oba.level=2;KIDS.oba.v5=1}
 save("tt.kids",KIDS);
 const freshToday=()=>Object.fromEntries(MODE_IDS.map(m=>[m,[0,0]]));
 function loadKid(id){
@@ -246,14 +248,13 @@ function bagDraw(key,src){
   return src[i]||src[0];
 }
 function poolFor(mode){
-  if(mode==="find")return stageItems(1);
   if(mode==="build"){const st=Math.max(2,Math.min(4,S.settings.level));return stageItems(st).filter(i=>i.src!=="legacy"&&i.s.split(" ").length>=2)}
   return stageItems(S.settings.level);
 }
 function pick(){
   S.review=false;const pool=poolFor(S.mode);
   if(S.mode!=="say"&&Math.random()<0.34){const due=srDue(ITEMS.filter(i=>i.stage<=S.settings.level&&inPlay(i)));if(due.length){S.review=true;return due[Math.random()*due.length|0]}}
-  return bagDraw("pool:"+S.mode+":"+(S.mode==="find"?1:S.settings.level)+":"+pool.length,pool);
+  return bagDraw("pool:"+S.mode+":"+S.settings.level+":"+pool.length,pool);
 }
 // Wrong answers share the frame (same group, same stage), so meaning has to do the work.
 function distractors(item,n){
@@ -273,7 +274,7 @@ function named(line,fallback){const n=S.settings.name;const t=line.replace("{n}"
 function setStars(){$("stars").textContent="⭐ "+S.stars}
 function setLevelBadge(){
   const b=$("lvlBadge");
-  if(S.mode==="find"||S.mode==="next"||S.mode==="feel")b.textContent=MODE_LABEL[S.mode];
+  if(S.mode==="next"||S.mode==="feel")b.textContent=MODE_LABEL[S.mode];
   else if(S.mode==="ask")b.textContent="WH "+S.settings.wh+" · "+WH_LEVELS[S.settings.wh-1].name;
   else b.textContent="Stage "+S.settings.level+" · "+STAGES[S.settings.level-1].name;
 }
@@ -296,10 +297,12 @@ function nextButtons(repeatText,extra){
   a.append(mk("🔊 Hear it again","btn",()=>speak(repeatText)));if(extra)a.append(extra);a.append(mk("Next ▶","btn primary",()=>afterRound()));
 }
 const roundMeta=firstTry=>({replays:S.replays||0,ms:firstTry?Date.now()-S.roundT0:undefined,review:S.review||undefined});
-// Auto level-up: 8 of the last 10 first-try answers right in the reading activities.
+// Auto level-up from Find it and Read it (first try) and Say it ("He said it"): 5 right in a row, or 8 of the last 10.
 function track(ok){
   S.recent.push(ok);if(S.recent.length>10)S.recent.shift();
-  if(S.settings.auto&&S.recent.length===10&&S.recent.filter(Boolean).length>=8&&S.settings.level<STAGES.length){S.settings.level++;syncKid();S.recent=[];speak("Level up!")}
+  const fiveInRow=S.recent.length>=5&&S.recent.slice(-5).every(Boolean);
+  const eightOfTen=S.recent.length===10&&S.recent.filter(Boolean).length>=8;
+  if(S.settings.auto&&(fiveInRow||eightOfTen)&&S.settings.level<STAGES.length){S.settings.level++;syncKid();S.recent=[];speak("Level up!")}
 }
 function trackAsk(ok){
   S.recentAsk.push(ok);if(S.recentAsk.length>10)S.recentAsk.shift();
@@ -313,12 +316,12 @@ function newRound(){
   const r={find:findRound,read:readRound,say:sayRound,ask:askRound,build:buildRound,next:nextRound,feel:feelRound,do:doRound}[S.mode]||findRound;
   r();
 }
-// Find it: hear the word, tap the picture.
+// Find it: hear it, tap the picture. Stage 1 says "Find the X"; from Stage 2 it speaks the stage sentence (no reading).
 function findRound(){
   S.item=pick();last=S.item;const u=resetStage();
   S.choices=shuffle([S.item,...distractors(S.item)]);tileButtons(S.choices,choose);
-  u.pt.textContent="Tap the speaker";u.pt.classList.add("hidden-word");u.hint.textContent="He hears the word, then taps the picture.";
-  S.prompt=S.item.find;speak(S.prompt);
+  u.pt.textContent="Tap the speaker";u.pt.classList.add("hidden-word");u.hint.textContent=S.settings.level>1?"He hears it, then taps the picture.":"He hears the word, then taps the picture.";
+  S.prompt=S.item.stage>1?S.item.s:S.item.find;speak(S.prompt);
 }
 // Read it: read the words, tap the matching picture. Stage sets how long the text is.
 function readRound(){
@@ -331,13 +334,13 @@ function choose(btn,c){
   if(S.locked)return;
   const stat=S.today[S.mode];stat[1]++;
   const firstTry=!S.triedThisRound;S.triedThisRound=true;const ok=c===S.item;
-  logEvent({mode:S.mode,level:S.settings.level,item:S.mode==="find"?S.item.find:S.item.s,target:S.item.w,cat:S.item.cat,choice:c.w,correct:ok,first_try:firstTry&&ok,...roundMeta(firstTry)});
+  logEvent({mode:S.mode,level:S.settings.level,item:S.mode==="find"?S.prompt:S.item.s,target:S.item.w,cat:S.item.cat,choice:c.w,correct:ok,first_try:firstTry&&ok,...roundMeta(firstTry)});
   if(firstTry)srUpdate(S.item,ok,!ok);
   if(ok){
-    markRight(btn);stat[0]++;win(1);if(S.mode==="read")track(firstTry);
+    markRight(btn);stat[0]++;win(1);if(firstTry)track(true);
     speak(praise()+" "+S.item.s,()=>{nextButtons(S.item.s);$("hint").textContent="Your turn: say \""+S.item.s.replace(/\.$/,"")+"\". Then tap Next.";speak((Math.random()<0.5?named("{n}, your turn.","Your turn."):"Your turn.")+" "+S.item.s)});
   }else{
-    markWrong(btn);miss();if(S.mode==="read")track(false);
+    markWrong(btn);miss();if(firstTry)track(false);
     speak((Math.random()<0.4?named("Try again, {n}.","Try again."):"Try again.")+" "+S.prompt);
   }
 }
@@ -352,6 +355,7 @@ function sayRound(){
 function scoreSay(n,how){
   const stat=S.today.say;stat[1]++;
   logEvent({mode:"say",level:S.settings.level,item:S.item.q,target:S.item.s,cat:S.item.cat,score:n,correct:n>0,first_try:n===2,choice:how||(n===2?"said":n===1?"tried":"skip")});
+  track(n===2);
   if(n>0){stat[0]++;win(n);speak(praise()+" "+S.item.s,()=>afterRound())}else afterRound();
   persistToday();
 }
