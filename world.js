@@ -215,7 +215,7 @@ function describe(){
 function wearLine(it){
   if(it.cat==="clothes"||(it.cat==="extra"&&it.say)||(it.cat==="pet"&&it.say))return `I have ${it.say}!`;
   if(it.cat==="hair"||it.cat==="hcol")return `I have ${hairWords(W.look)}!`;
-  if(it.cat==="place")return `I am ${it.say}!`;
+  if(it.cat==="place")return `I am ${it.say.replace(" her "," my ")}!`;
   if(it.cat==="face")return `I feel ${it.name}!`;
   if(it.cat==="eyes")return `I have ${it.name} eyes!`;
   return "I look great!";
@@ -239,7 +239,7 @@ function relation(t){
   }
   return best;
 }
-function relSentence(t){const r=relation(t);if(!r)return null;const n=thingName(t);return `${n[0].toUpperCase()+n.slice(1)} is ${r.word} ${thingName(r.f)}.`}
+function relSentence(t){const r=relation(t);if(!r)return null;const n=thingName(t);return `${n[0].toUpperCase()+n.slice(1)} ${t.id==="books"?"are":"is"} ${r.word} ${thingName(r.f)}.`}
 function describeRoom(){
   const things=W.room.items.filter(t=>t.id!=="me").map(t=>BY[t.id].say);
   const out=[things.length?`${NAME()}'s room has ${listWords(things)}.`:`${NAME()}'s room is empty.`];

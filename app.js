@@ -223,7 +223,7 @@ function speak(text,cb){
   })();
 }
 let unlocked=false;
-document.addEventListener("touchend",()=>{if(unlocked)return;unlocked=true;for(const v of ["jessica","dad","mum"]){const a=spriteAudio(v);a.volume=1;a.load()}{const a=spriteAudio("jessica",1);a.volume=1;a.load()}},{once:true,passive:true});
+document.addEventListener("touchend",()=>{if(unlocked)return;unlocked=true;for(const v of ["jessica","dad","mum"]){const a=spriteAudio(v);a.volume=1;a.load()}for(const f of [1,2]){const a=spriteAudio("jessica",f);a.volume=1;a.load()}},{once:true,passive:true});
 
 // ---------- Helpers ----------
 const $=id=>document.getElementById(id);
